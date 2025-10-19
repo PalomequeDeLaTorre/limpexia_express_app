@@ -174,9 +174,14 @@ class _DashboardClienteState extends State<DashboardCliente> {
         selectedColor: AppColores.primario,
         labelStyle: TextStyle(
           color: seleccionado ? AppColores.blanco : AppColores.texto,
+          ///hagafadfadafa
           fontWeight: FontWeight.w600,
         ),
       ),
     );
   }
 }
+
+
+
+
