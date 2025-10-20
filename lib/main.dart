@@ -33,7 +33,7 @@ class MiApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PwaProvider()),
       ],
       child: MaterialApp(
-        title: 'Servicios App',
+        title: 'Limpexia',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: AppColores.primario),

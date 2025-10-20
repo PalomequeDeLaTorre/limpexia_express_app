@@ -7,6 +7,7 @@ import '../utilidades/colores.dart';
 import 'registro.dart';
 import 'dashboard_cliente.dart';
 import 'dashboard_profesional.dart';
+import 'package:flutter/services.dart';
 
 class PantallaLogin extends StatefulWidget {
   const PantallaLogin({super.key});
@@ -65,108 +66,140 @@ class _PantallaLoginState extends State<PantallaLogin> {
     final authProvider = context.watch<AuthProvider>();
 
     return Scaffold(
-      backgroundColor: AppColores.fondo,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.work_outline,
-                    size: 80,
-                    color: AppColores.primario,
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Servicios App',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: AppColores.texto,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Encuentra profesionales o ofrece tus servicios',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColores.textoClaro,
-                    ),
-                  ),
-                  const SizedBox(height: 48),
-                  InputPersonalizado(
-                    label: 'Email',
-                    hint: 'ejemplo@correo.com',
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Ingresa tu email';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Email inválido';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  InputPersonalizado(
-                    label: 'Contraseña',
-                    hint: '••••••••',
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      body: Stack(
+        children: [
+        // Imagen superior
+        Positioned(
+        top: 0,
+        left: 0,
+        right: 0,
+        child: Image.asset(
+        'assets/borde_arriba.png',
+         height: 400, 
+         fit: BoxFit.cover,
+         ),
+        ),
+
+        // Imagen inferior
+        Positioned(
+        bottom: -10,
+        left: 0,
+        right: 0,
+        child: Image.asset(
+        'assets/borde_abajo.png',
+        height: 400, 
+        fit: BoxFit.cover,
+        ),
+      ),
+
+          // Contenido principal
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/logo_limpexia.png',
+                        height: 100,
+                        width: 100,
+                        fit: BoxFit.contain,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Ingresa tu contraseña';
-                      }
-                      if (value.length < 6) {
-                        return 'Mínimo 6 caracteres';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  BotonPersonalizado(
-                    texto: 'Iniciar Sesión',
-                    onPressed: _iniciarSesion,
-                    cargando: authProvider.cargando,
-                  ),
-                  const SizedBox(height: 16),
-                  BotonPersonalizado(
-                    texto: 'Crear Cuenta',
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const PantallaRegistro(),
+                      const SizedBox(height: 3),
+                      const Text(
+                        'Limpexia',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF064E7D),
                         ),
-                      );
-                    },
-                    outline: true,
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Encuentra profesionales de limpieza o ofrece tus servicios',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color.fromARGB(162, 0, 0, 0),
+                        ),
+                      ),
+                      const SizedBox(height: 48),
+                      InputPersonalizado(
+                        label: 'Gmail o Correo electrónico',
+                        hint: 'ejemplo@correo.com',
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        prefixIcon: const Icon(Icons.email_outlined),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Ingresa tu Gmail o Correo electrónico';
+                          }
+                          if (!value.contains('@')) {
+                            return 'Gmail o Correo electrónico inválido';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      InputPersonalizado(
+                        label: 'Contraseña',
+                        hint: '••••••••',
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Ingresa tu contraseña';
+                          }
+                          if (value.length < 6) {
+                            return 'Mínimo 6 caracteres';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      BotonPersonalizado(
+                        texto: 'Iniciar Sesión',
+                        onPressed: _iniciarSesion,
+                        cargando: authProvider.cargando,
+                        color: const Color(0xFF064E7D),
+                      ),
+                      const SizedBox(height: 16),
+                      BotonPersonalizado(
+                        texto: 'Crear Cuenta',
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const PantallaRegistro(),
+                            ),
+                          );
+                        },
+                        outline: true,
+                        color: const Color(0xFF064E7D),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
