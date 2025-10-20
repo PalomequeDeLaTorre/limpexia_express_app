@@ -163,7 +163,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                               decoration: BoxDecoration(
                                 border: Border.all(
                                   color: _tipoUsuario == 'cliente'
-                                      ? AppColores.primario
+                                      ? const Color.fromARGB(255, 85, 201, 255)
                                       : Colors.grey.shade300,
                                   width: 3,
                                 ),
@@ -172,7 +172,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                                   if (_tipoUsuario == 'cliente')
                                     BoxShadow(
                                       color:
-                                          AppColores.primario.withOpacity(0.3),
+                                          const Color.fromARGB(255, 115, 234, 255).withOpacity(0.3),
                                       blurRadius: 10,
                                       spreadRadius: 2,
                                     ),
@@ -209,7 +209,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                               decoration: BoxDecoration(
                                 border: Border.all(
                                   color: _tipoUsuario == 'profesional'
-                                      ? AppColores.primario
+                                      ? const Color.fromARGB(255, 85, 201, 255)
                                       : Colors.grey.shade300,
                                   width: 3,
                                 ),
@@ -218,7 +218,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                                   if (_tipoUsuario == 'profesional')
                                     BoxShadow(
                                       color:
-                                          AppColores.primario.withOpacity(0.3),
+                                          const Color.fromARGB(255, 115, 234, 255).withOpacity(0.3),
                                       blurRadius: 10,
                                       spreadRadius: 2,
                                     ),
