@@ -3,11 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/boton.dart';
 import '../widgets/input.dart';
-import '../utilidades/colores.dart';
 import 'registro.dart';
-import 'dashboard_cliente.dart';
-import 'dashboard_profesional.dart';
-import 'package:flutter/services.dart';
 
 class PantallaLogin extends StatefulWidget {
   const PantallaLogin({super.key});
@@ -30,34 +26,36 @@ class _PantallaLoginState extends State<PantallaLogin> {
   }
 
   Future<void> _iniciarSesion() async {
-    if (_formKey.currentState!.validate()) {
-      final authProvider = context.read<AuthProvider>();
-      final exito = await authProvider.iniciarSesion(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+    // Validar el formulario
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
 
-      if (mounted) {
-        if (exito) {
-          final usuario = authProvider.usuario;
-          if (usuario != null) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (_) => usuario.tipo == 'cliente'
-                    ? const DashboardCliente()
-                    : const DashboardProfesional(),
-              ),
-            );
-          }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error al iniciar sesión'),
-              backgroundColor: AppColores.error,
-            ),
-          );
-        }
+    // Obtener email y password
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    final authProvider = context.read<AuthProvider>();
+
+    final bool exito = await authProvider.iniciarSesion(email, password);
+
+    if (!mounted) return;
+
+    if (exito) {
+      final rol = authProvider.userRole;
+
+      if (rol == 'profesional') {
+        Navigator.of(context).pushReplacementNamed('dashboard_profesional');
+      } else {
+        Navigator.of(context).pushReplacementNamed('dashboard_cliente');
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.errorMensaje ?? 'Error desconocido al iniciar sesión.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -69,29 +67,29 @@ class _PantallaLoginState extends State<PantallaLogin> {
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: Stack(
         children: [
-        // Imagen superior
-        Positioned(
-        top: 0,
-        left: 0,
-        right: 0,
-        child: Image.asset(
-        'assets/borde_arriba.png',
-         height: 400, 
-         fit: BoxFit.cover,
-         ),
-        ),
+          // Imagen superior
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Image.asset(
+              'assets/borde_arriba.png',
+              height: 400,
+              fit: BoxFit.cover,
+            ),
+          ),
 
-        // Imagen inferior
-        Positioned(
-        bottom: -10,
-        left: 0,
-        right: 0,
-        child: Image.asset(
-        'assets/borde_abajo.png',
-        height: 400, 
-        fit: BoxFit.cover,
-        ),
-      ),
+          // Imagen inferior
+          Positioned(
+            bottom: -10,
+            left: 0,
+            right: 0,
+            child: Image.asset(
+              'assets/borde_abajo.png',
+              height: 400,
+              fit: BoxFit.cover,
+            ),
+          ),
 
           // Contenido principal
           SafeArea(
@@ -138,7 +136,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
                           if (value == null || value.isEmpty) {
                             return 'Ingresa tu Gmail o Correo electrónico';
                           }
-                          if (!value.contains('@')) {
+                          if (!value.contains('@') || !value.contains('.')) {
                             return 'Gmail o Correo electrónico inválido';
                           }
                           return null;
@@ -176,8 +174,8 @@ class _PantallaLoginState extends State<PantallaLogin> {
                       const SizedBox(height: 24),
                       BotonPersonalizado(
                         texto: 'Iniciar Sesión',
-                        onPressed: _iniciarSesion,
-                        cargando: authProvider.cargando,
+                        onPressed: _iniciarSesion, // <--- Conectado
+                        cargando: authProvider.cargando, // <--- Conectado
                         color: const Color(0xFF064E7D),
                       ),
                       const SizedBox(height: 16),

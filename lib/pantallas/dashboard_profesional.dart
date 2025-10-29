@@ -7,6 +7,17 @@ import '../utilidades/colores.dart';
 import '../utilidades/helpers.dart';
 import 'login.dart';
 
+
+
+class DashboardProfesional extends StatelessWidget {
+  const DashboardProfesional({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
+  }
+}
+/*
 class DashboardProfesional extends StatefulWidget {
   const DashboardProfesional({super.key});
 
@@ -273,3 +284,5 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
     }
   }
 }
+
+*/

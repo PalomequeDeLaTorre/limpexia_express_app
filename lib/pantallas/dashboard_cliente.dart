@@ -9,6 +9,32 @@ import '../utilidades/constantes.dart';
 import 'detalle_servicio.dart';
 import 'login.dart';
 
+
+class DashboardCliente extends StatelessWidget {
+  const DashboardCliente({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/fondo_dashboard.jpg'),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        height: double.infinity,
+        // Aquí va tu contenido encima del fondo
+      ),
+    );
+  }
+}
+
+/*
+
 class DashboardCliente extends StatefulWidget {
   const DashboardCliente({super.key});
 
@@ -185,3 +211,4 @@ class _DashboardClienteState extends State<DashboardCliente> {
 
 
 
+*/

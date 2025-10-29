@@ -1,85 +1,146 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../servicios/firebase_service.dart';
-import '../modelos/usuario.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/material.dart';
 
-class AuthProvider with ChangeNotifier {
-  final FirebaseService _firebaseService = FirebaseService();
-  Usuario? _usuario;
-  bool _cargando = false;
+class AuthProvider extends ChangeNotifier {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseDatabase _database = FirebaseDatabase.instance;
 
-  Usuario? get usuario => _usuario;
-  bool get cargando => _cargando;
-  bool get estaAutenticado => _usuario != null;
-
-  Future<bool> registrar({
-    required String nombre,
-    required String email,
-    required String password,
-    required String telefono,
-    required String tipo,
-    String? profesion,
-  }) async {
-    try {
-      _cargando = true;
-      notifyListeners();
-
-      final user = await _firebaseService.registrar(email, password);
-      if (user != null) {
-        final nuevoUsuario = Usuario(
-          id: user.uid,
-          nombre: nombre,
-          email: email,
-          telefono: telefono,
-          tipo: tipo,
-          profesion: profesion,
-          fechaRegistro: DateTime.now(),
-        );
-        
-        await _firebaseService.crearUsuario(nuevoUsuario);
-        _usuario = nuevoUsuario;
-        
-        _cargando = false;
-        notifyListeners();
-        return true;
-      }
-      
-      _cargando = false;
-      notifyListeners();
-      return false;
-    } catch (e) {
-      _cargando = false;
-      notifyListeners();
-      return false;
-    }
-  }
+  bool cargando = false;
+  String? errorMensaje;
+  String? userRole;
 
   Future<bool> iniciarSesion(String email, String password) async {
     try {
-      _cargando = true;
+      cargando = true;
+      errorMensaje = null;
+      userRole = null;
       notifyListeners();
 
-      final user = await _firebaseService.iniciarSesion(email, password);
-      if (user != null) {
-        _usuario = await _firebaseService.obtenerUsuario(user.uid);
-        _cargando = false;
-        notifyListeners();
-        return true;
+      // Iniciar sesión en Firebase Auth
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      final user = userCredential.user;
+      if (user == null) {
+        throw Exception("No se pudo obtener el usuario después de iniciar sesión.");
       }
-      
-      _cargando = false;
+
+      // Obtener el rol desde Realtime Database
+      final userRef = _database.ref('usuarios/${user.uid}');
+      final snapshot = await userRef.get();
+
+      if (snapshot.exists) {
+        final data = snapshot.value as Map<dynamic, dynamic>;
+        userRole = data['rol'] as String?;
+
+        if (userRole == null) {
+          throw Exception('El rol del usuario no está definido en la base de datos.');
+        }
+      } else {
+        throw Exception('No se encontraron datos de usuario en la base de datos.');
+      }
+
+      cargando = false;
       notifyListeners();
-      return false;
+      return true;
+
     } catch (e) {
-      _cargando = false;
+      cargando = false;
+      errorMensaje = _obtenerMensajeDeError(e);
       notifyListeners();
       return false;
     }
   }
 
+  Future<bool> registrarUsuario(
+    String email,
+    String password,
+    String nombre,
+    String telefono,
+    String rol,
+    String? profesion,
+  ) async {
+    try {
+      cargando = true;
+      errorMensaje = null;
+      userRole = null;
+      notifyListeners();
+
+      // Crear el usuario en Firebase Auth
+      final userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      final user = userCredential.user;
+      if (user == null) {
+        throw Exception("No se pudo crear el usuario.");
+      }
+
+      // Preparar los datos para Realtime Database
+      final Map<String, dynamic> userData = {
+        'uid': user.uid,
+        'email': email,
+        'nombre': nombre,
+        'telefono': telefono,
+        'rol': rol,
+      };
+
+      if (rol == 'profesional' && profesion != null && profesion.isNotEmpty) {
+        userData['profesion'] = profesion;
+      }
+
+      // guardar los datos en Realtime Database
+      final userRef = _database.ref('usuarios/${user.uid}');
+      await userRef.set(userData);
+
+      userRole = rol;
+      cargando = false;
+      notifyListeners();
+      return true;
+
+    } catch (e) {
+      cargando = false;
+      if (e is FirebaseAuthException) {
+        print('Código de error: ${e.code}');
+        print('Mensaje de error: ${e.message}');
+      } else {
+        print('Error genérico: $e');
+      }
+      errorMensaje = _obtenerMensajeDeError(e);
+      notifyListeners();
+      return false;
+    }
+
+  }
+
+  // --- MÉTODO PARA CERRAR SESIÓN ---
   Future<void> cerrarSesion() async {
-    await _firebaseService.cerrarSesion();
-    _usuario = null;
+    await _auth.signOut();
+    userRole = null;
     notifyListeners();
+  }
+
+  String _obtenerMensajeDeError(dynamic error) {
+    String mensaje = error.toString();
+    
+    // Errores de Login
+    if (mensaje.contains('user-not-found')) return "No existe una cuenta con este correo.";
+    if (mensaje.contains('wrong-password')) return "Contraseña incorrecta.";
+    if (mensaje.contains('invalid-email')) return "Correo no válido.";
+
+    // Errores de Registro
+    if (mensaje.contains('email-already-in-use')) return "Este correo ya está registrado.";
+    if (mensaje.contains('weak-password')) return "La contraseña es muy débil (mínimo 6 caracteres).";
+    
+    // Errores de RTDB
+    if (mensaje.contains('Rol no definido')) return "Tu cuenta no tiene un rol asignado.";
+    if (mensaje.contains('Datos de usuario no encontrados')) return "No pudimos encontrar tus datos de perfil.";
+    
+    // Error genérico
+    return "Ocurrió un error inesperado. Intenta de nuevo.";
   }
 }
