@@ -1,13 +1,15 @@
 {
-    "name": "limpexia_express_app",
-    "short_name": "limpexia_express_app",
+    "name": "Limpexia Express",
+    "short_name": "Limpexia",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
+    "background_color": "#FFFFFF",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "App de limpieza express - Encuentra profesionales de limpieza confiables",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
+    "categories": ["business", "lifestyle"],
+    "lang": "es-MX",
     "icons": [
         {
             "src": "icons/Icon-192.png",

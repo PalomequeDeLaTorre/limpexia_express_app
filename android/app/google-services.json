@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "460133570608",
+    "firebase_url": "https://limpexia-1c584-default-rtdb.firebaseio.com",
+    "project_id": "limpexia-1c584",
+    "storage_bucket": "limpexia-1c584.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:460133570608:android:3452f496cc31e70b5035f5",
+        "android_client_info": {
+          "package_name": "com.example.limpexia_express_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKSa9stYqkGuFJE8zV3BTbpHSvn8TZBgI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

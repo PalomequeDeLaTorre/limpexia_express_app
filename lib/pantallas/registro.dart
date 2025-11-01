@@ -4,9 +4,7 @@ import '../providers/auth_provider.dart';
 import '../widgets/boton.dart';
 import '../widgets/input.dart';
 import '../utilidades/colores.dart';
-import '../utilidades/constantes.dart';
-import 'dashboard_cliente.dart';
-import 'dashboard_profesional.dart';
+
 
 class PantallaRegistro extends StatefulWidget {
   const PantallaRegistro({super.key});
@@ -37,42 +35,51 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
   }
 
   Future<void> _registrar() async {
-    if (_formKey.currentState!.validate()) {
-      final authProvider = context.read<AuthProvider>();
-      final exito = await authProvider.registrar(
-        nombre: _nombreController.text.trim(),
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        telefono: _telefonoController.text.trim(),
-        tipo: _tipoUsuario,
-        profesion: _tipoUsuario == 'profesional'
-            ? _profesionController.text.trim()
-            : null,
-      );
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
 
-      if (mounted) {
-        if (exito) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (_) => _tipoUsuario == 'cliente'
-                  ? const DashboardCliente()
-                  : const DashboardProfesional(),
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error al registrar'),
-              backgroundColor: AppColores.error,
-            ),
-          );
-        }
+    // Obtener todos los datos del formulario
+    final nombre = _nombreController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final telefono = _telefonoController.text.trim();
+    final rol = _tipoUsuario;
+    final profesion =
+        (rol == 'profesional') ? _profesionController.text.trim() : null;
+
+    final authProvider = context.read<AuthProvider>();
+    final bool exito = await authProvider.registrarUsuario(
+      email,
+      password,
+      nombre,
+      telefono,
+      rol,
+      profesion,
+    );
+
+    if (!mounted) return;
+
+    if (exito) {
+      if (rol == 'profesional') {
+        Navigator.of(context).pushReplacementNamed('dashboard_profesional');
+      } else {
+        Navigator.of(context).pushReplacementNamed('dashboard_cliente');
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(authProvider.errorMensaje ?? 'Error desconocido al registrarse.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Usamos context.watch para que el widget se redibuje si 'cargando' cambia
     final authProvider = context.watch<AuthProvider>();
 
     return Scaffold(
@@ -268,7 +275,8 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                         if (value == null || value.isEmpty) {
                           return 'Ingresa tu Gmail o Correo electrónico';
                         }
-                        if (!value.contains('@')) {
+                        // Corrección: Validación de email más robusta
+                        if (!value.contains('@') || !value.contains('.')) {
                           return 'Gmail o Correo electrónico inválido';
                         }
                         return null;
@@ -294,7 +302,10 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                         controller: _profesionController,
                         prefixIcon: const Icon(Icons.work_outline),
                         validator: (value) {
-                          if (value == null || value.isEmpty) {
+                          // --- 2. VALIDACIÓN CORREGIDA ---
+                          // Solo valida si el tipo de usuario es profesional
+                          if (_tipoUsuario == 'profesional' &&
+                              (value == null || value.isEmpty)) {
                             return 'Ingresa tu profesión';
                           }
                           return null;
@@ -332,6 +343,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                     const SizedBox(height: 32),
                     BotonPersonalizado(
                       texto: 'Registrarse',
+                      // --- 3. CONECTANDO EL BOTÓN ---
                       onPressed: _registrar,
                       cargando: authProvider.cargando,
                       color: const Color(0xFF064E7D),
