@@ -20,6 +20,7 @@ class DetalleServicio extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColores.primario,
         elevation: 0,
+        automaticallyImplyLeading: false, 
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColores.blanco),
           onPressed: () => Navigator.pop(context),
