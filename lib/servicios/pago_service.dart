@@ -5,10 +5,10 @@ class PagoService {
     required String tarjetaNumero,
   }) async {
     try {
-      // Simular procesamiento de pago
+      // Simular procesamiento de pago;
       await Future.delayed(const Duration(seconds: 2));
       
-      // Validar número de tarjeta básico
+      // Validar número de tarjeta básico;
       if (tarjetaNumero.length != 16) {
         throw Exception('Número de tarjeta inválido');
       }

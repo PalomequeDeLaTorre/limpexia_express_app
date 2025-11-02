@@ -5,8 +5,6 @@ import '../providers/auth_provider.dart';
 import '../utilidades/colores.dart';
 import '../utilidades/helpers.dart';
 
-
-
 /*
 class PantallaChat extends StatefulWidget {
   final String reservaId;

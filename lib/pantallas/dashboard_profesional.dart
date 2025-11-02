@@ -1,23 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/reserva_provider.dart';
-import '../widgets/loading.dart';
 import '../utilidades/colores.dart';
-import '../utilidades/helpers.dart';
 import 'login.dart';
 
-
-
-class DashboardProfesional extends StatelessWidget {
-  const DashboardProfesional({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
-  }
-}
-/*
 class DashboardProfesional extends StatefulWidget {
   const DashboardProfesional({super.key});
 
@@ -26,13 +12,42 @@ class DashboardProfesional extends StatefulWidget {
 }
 
 class _DashboardProfesionalState extends State<DashboardProfesional> {
+  double calificacionPromedio = 4.6;
+  bool disponible = true;
+  List<String> servicios = [];
+  List<double> tarifas = [];
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final usuario = context.read<AuthProvider>().usuario;
-      if (usuario != null) {
-        context.read<ReservaProvider>().cargarReservasProfesional(usuario.id);
+      _configurarServicios();
+    });
+  }
+
+  // Método auxiliar para obtener el ImageProvider correcto;
+  ImageProvider _getImageProvider(String imagePath) {
+    if (imagePath.startsWith('http')) {
+      return NetworkImage(imagePath);
+    } else {
+      return AssetImage(imagePath);
+    }
+  }
+
+  void _configurarServicios() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final profesion = authProvider.profesion ?? "";
+
+    setState(() {
+      if (profesion == "Limpieza de casas") {
+        servicios = ["Limpieza profunda", "Lavar ropa", "Planchar"];
+        tarifas = [200, 150, 180];
+      } else if (profesion == "Lavado de autos") {
+        servicios = ["Pulido", "Encerado", "Interior"];
+        tarifas = [350, 300, 250];
+      } else {
+        servicios = [];
+        tarifas = [];
       }
     });
   }
@@ -40,249 +55,342 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    final reservaProvider = context.watch<ReservaProvider>();
-    final usuario = authProvider.usuario;
+
+    final nombreUsuario = authProvider.nombreUsuario ?? "Profesional";
+    final profesion = authProvider.profesion ?? "Sin profesión asignada";
+    final fotoUsuario = authProvider.fotoPerfilUrl ?? '';
 
     return Scaffold(
       backgroundColor: AppColores.fondo,
       appBar: AppBar(
-        backgroundColor: AppColores.secundario,
+        backgroundColor: const Color.fromARGB(255, 6, 78, 125),
         elevation: 0,
-        title: const Text(
-          'Mis Reservas',
-          style: TextStyle(color: AppColores.blanco),
+        automaticallyImplyLeading: false, 
+        title: ClipOval(
+          child: Container(
+            color: Colors.white,
+            padding: const EdgeInsets.all(4),
+            child: Image.asset(
+              'assets/logo_limpexia2.png',
+              height: 35,
+              fit: BoxFit.contain,
+            ),
+          ),
         ),
+        centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: AppColores.blanco),
-            onPressed: () async {
-              await authProvider.cerrarSesion();
-              if (context.mounted) {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const PantallaLogin()),
-                );
+            icon: const Icon(Icons.notifications, color: Colors.white, size: 22),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Notificaciones")),
+              );
+            },
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: Colors.white, size: 22),
+            onSelected: (value) async {
+              if (value == 'cerrar') {
+                await authProvider.cerrarSesion();
+                if (context.mounted) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const PantallaLogin()),
+                  );
+                }
               }
             },
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'perfil', child: Text('👤 Mi perfil')),
+              PopupMenuItem(value: 'servicios', child: Text('🧾 Mis servicios')),
+              PopupMenuItem(value: 'pagos', child: Text('💳 Pagos y facturas')),
+              PopupMenuItem(value: 'ayuda', child: Text('🛟 Ayuda y soporte')),
+              PopupMenuItem(value: 'config', child: Text('⚙️ Configuración')),
+              PopupMenuDivider(),
+              PopupMenuItem(value: 'cerrar', child: Text('🚪 Cerrar sesión')),
+            ],
           ),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColores.secundario,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
-            ),
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '¡Hola, ${usuario?.nombre ?? "Usuario"}!',
-                  style: const TextStyle(
-                    fontSize: 24,
+                // Perfil;
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 36,
+                       backgroundImage: fotoUsuario.isNotEmpty
+                       ? NetworkImage(fotoUsuario)
+                        : const AssetImage('assets/profesional.jpg') as ImageProvider,
+                       ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Hola, $nombreUsuario 👋",
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                          Text(
+                            profesion,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Servicios;
+                const Text(
+                  "Servicios ofrecidos",
+                  style: TextStyle(
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColores.blanco,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (servicios.isEmpty)
+                  const Text(
+                    "No hay servicios configurados para esta profesión.",
+                    style: TextStyle(color: Colors.black),
+                  ),
+                if (servicios.isNotEmpty)
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: servicios.map((servicio) {
+                      final bool esAuto = servicio == "Pulido" ||
+                          servicio == "Encerado" ||
+                          servicio == "Interior";
+                      return Chip(
+                        label: Text(servicio),
+                        labelStyle: const TextStyle(color: Colors.white),
+                        backgroundColor: esAuto
+                            ? const Color.fromARGB(255, 6, 78, 125)
+                            : AppColores.secundario,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                      );
+                    }).toList(),
+                  ),
+                const SizedBox(height: 28),
+
+                // Tarifas;
+                const Text(
+                  "Mis tarifas",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (tarifas.isNotEmpty)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: tarifas.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final precio = entry.value;
+                      Color colorTarifa;
+                      if (index == 0) {
+                        colorTarifa = Colors.yellow.shade700;
+                      } else if (index == 1) {
+                        colorTarifa = Colors.orange;
+                      } else {
+                        colorTarifa = Colors.red;
+                      }
+                      return ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colorTarifa,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 14),
+                        ),
+                        child: Text(
+                          "\$${precio.toStringAsFixed(0)}",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                const SizedBox(height: 32),
+
+                // Calificaciones;
+                const Text(
+                  "Calificaciones y Opiniones",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(5, (index) {
+                          return Icon(
+                            index < calificacionPromedio.round()
+                                ? Icons.star
+                                : Icons.star_border,
+                            color: Colors.amber,
+                            size: 28,
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "${calificacionPromedio.toStringAsFixed(1)} / 5.0",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        "Promedio basado en opiniones de clientes",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // Disponibilidad;
+                const Text(
+                  "Disponibilidad",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Center(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        disponible = !disponible;
+                      });
+                    },
+                    icon: Icon(
+                      disponible ? Icons.check_circle : Icons.cancel,
+                      color: Colors.white,
+                    ),
+                    label: Text(
+                      disponible ? "Disponible" : "No disponible",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          disponible ? Colors.green : Colors.red,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 40, vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // Experiencia;
+                const Text(
+                  "Experiencia",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  usuario?.profesion ?? 'Profesional',
-                  style: const TextStyle(
+                const Text(
+                  "3 años de experiencia profesional en servicios de limpieza",
+                  style: TextStyle(
                     fontSize: 14,
-                    color: AppColores.blanco,
+                    color: Colors.black,
                   ),
                 ),
+                const SizedBox(height: 40),
+
+                Center(
+                  child: Text(
+                    "© 2025 Limpexia Express. Todos los derechos reservados.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: reservaProvider.cargando
-                ? const LoadingWidget(mensaje: 'Cargando reservas...')
-                : reservaProvider.reservas.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No tienes reservas pendientes',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: AppColores.textoClaro,
-                          ),
-                        ),
-                      )
-                    : RefreshIndicator(
-                        onRefresh: () async {
-                          if (usuario != null) {
-                            await context
-                                .read<ReservaProvider>()
-                                .cargarReservasProfesional(usuario.id);
-                          }
-                        },
-                        child: ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: reservaProvider.reservas.length,
-                          itemBuilder: (context, index) {
-                            final reserva = reservaProvider.reservas[index];
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'Reserva #${reserva.id.substring(0, 8)}',
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 6,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: _getColorEstado(
-                                                    reserva.estado)
-                                                .withOpacity(0.1),
-                                            borderRadius:
-                                                BorderRadius.circular(20),
-                                          ),
-                                          child: Text(
-                                            reserva.estado.toUpperCase(),
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color:
-                                                  _getColorEstado(reserva.estado),
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.calendar_today,
-                                          size: 16,
-                                          color: AppColores.textoClaro,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          Helpers.formatearFecha(
-                                              reserva.fechaReserva),
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            color: AppColores.textoClaro,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.attach_money,
-                                          size: 16,
-                                          color: AppColores.textoClaro,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          Helpers.formatearPrecio(reserva.precio),
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColores.secundario,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    if (reserva.estado == 'pendiente') ...[
-                                      const SizedBox(height: 12),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: ElevatedButton(
-                                              onPressed: () async {
-                                                await reservaProvider
-                                                    .actualizarEstado(
-                                                        reserva.id, 'confirmada');
-                                                if (context.mounted &&
-                                                    usuario != null) {
-                                                  context
-                                                      .read<ReservaProvider>()
-                                                      .cargarReservasProfesional(
-                                                          usuario.id);
-                                                }
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    AppColores.secundario,
-                                              ),
-                                              child: const Text('Confirmar'),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: OutlinedButton(
-                                              onPressed: () async {
-                                                await reservaProvider
-                                                    .actualizarEstado(
-                                                        reserva.id, 'cancelada');
-                                                if (context.mounted &&
-                                                    usuario != null) {
-                                                  context
-                                                      .read<ReservaProvider>()
-                                                      .cargarReservasProfesional(
-                                                          usuario.id);
-                                                }
-                                              },
-                                              style: OutlinedButton.styleFrom(
-                                                foregroundColor: AppColores.error,
-                                              ),
-                                              child: const Text('Rechazar'),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
+
+          // Botón flotante de chat;
+          Positioned(
+            bottom: 20,
+            right: 20,
+            child: FloatingActionButton.small(
+              backgroundColor: AppColores.secundario,
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Abrir chat")),
+                );
+              },
+              child: const Icon(Icons.chat, color: Colors.white, size: 22),
+            ),
           ),
         ],
       ),
     );
   }
-
-  Color _getColorEstado(String estado) {
-    switch (estado) {
-      case 'confirmada':
-        return AppColores.secundario;
-      case 'completada':
-        return Colors.blue;
-      case 'cancelada':
-        return AppColores.error;
-      default:
-        return Colors.orange;
-    }
-  }
 }
-
-*/

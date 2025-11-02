@@ -90,4 +90,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'limpexia-1c584.firebasestorage.app',
     measurementId: 'G-DBRTKYZP3B',
   );
+
 }

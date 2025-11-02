@@ -5,7 +5,6 @@ import '../widgets/boton.dart';
 import '../widgets/input.dart';
 import '../utilidades/colores.dart';
 
-
 class PantallaRegistro extends StatefulWidget {
   const PantallaRegistro({super.key});
 
@@ -35,11 +34,8 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
   }
 
   Future<void> _registrar() async {
-    if (!(_formKey.currentState?.validate() ?? false)) {
-      return;
-    }
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    // Obtener todos los datos del formulario
     final nombre = _nombreController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -79,11 +75,10 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
 
   @override
   Widget build(BuildContext context) {
-    // Usamos context.watch para que el widget se redibuje si 'cargando' cambia
     final authProvider = context.watch<AuthProvider>();
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 245, 247, 250),
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -94,30 +89,20 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
       ),
       body: Stack(
         children: [
-          // Imagen superior
           Positioned(
             top: -58,
             left: 0,
             right: 0,
-            child: Image.asset(
-              'assets/borde_arriba.png',
-              height: 400,
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/borde_arriba.png',
+                height: 400, fit: BoxFit.cover),
           ),
-
-          // Imagen inferior
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
-            child: Image.asset(
-              'assets/borde_abajo.png',
-              height: 400,
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/borde_abajo.png',
+                height: 400, fit: BoxFit.cover),
           ),
-
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -137,12 +122,11 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                     const SizedBox(height: 8),
                     const Text(
                       'Completa tus datos para comenzar',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color.fromARGB(162, 0, 0, 0),
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.black54),
                     ),
                     const SizedBox(height: 32),
+
+                    // Tipo de cuenta;
                     const Text(
                       'Tipo de cuenta',
                       style: TextStyle(
@@ -153,131 +137,32 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                     ),
                     const SizedBox(height: 12),
 
-                    // 🔹 NUEVA SECCIÓN con imágenes seleccionables
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _tipoUsuario = 'cliente';
-                              });
-                            },
-                            child: Container(
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 8),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: _tipoUsuario == 'cliente'
-                                      ? const Color.fromARGB(255, 85, 201, 255)
-                                      : Colors.grey.shade300,
-                                  width: 3,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  if (_tipoUsuario == 'cliente')
-                                    BoxShadow(
-                                      color:
-                                          const Color.fromARGB(255, 115, 234, 255).withOpacity(0.3),
-                                      blurRadius: 10,
-                                      spreadRadius: 2,
-                                    ),
-                                ],
-                              ),
-                              child: Column(
-                                children: [
-                                  Image.asset(
-                                    'assets/cliente.jpg',
-                                    height: 100,
-                                    fit: BoxFit.contain,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  const Text(
-                                    'Cliente',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _tipoUsuario = 'profesional';
-                              });
-                            },
-                            child: Container(
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 8),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: _tipoUsuario == 'profesional'
-                                      ? const Color.fromARGB(255, 85, 201, 255)
-                                      : Colors.grey.shade300,
-                                  width: 3,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  if (_tipoUsuario == 'profesional')
-                                    BoxShadow(
-                                      color:
-                                          const Color.fromARGB(255, 115, 234, 255).withOpacity(0.3),
-                                      blurRadius: 10,
-                                      spreadRadius: 2,
-                                    ),
-                                ],
-                              ),
-                              child: Column(
-                                children: [
-                                  Image.asset(
-                                    'assets/profesional.jpg',
-                                    height: 100,
-                                    fit: BoxFit.contain,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  const Text(
-                                    'Profesional',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
+                        _tipoCuentaOpcion('cliente', 'Cliente', 'assets/cliente.jpg'),
+                        _tipoCuentaOpcion('profesional', 'Profesional', 'assets/profesional.jpg'),
                       ],
                     ),
 
                     const SizedBox(height: 24),
-
                     InputPersonalizado(
                       label: 'Nombre completo',
                       controller: _nombreController,
                       prefixIcon: const Icon(Icons.person_outline),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Ingresa tu nombre';
-                        }
-                        return null;
-                      },
+                      validator: (value) =>
+                          value == null || value.isEmpty ? 'Ingresa tu nombre' : null,
                     ),
                     const SizedBox(height: 16),
                     InputPersonalizado(
-                      label: 'Gmail o Correo electrónico',
+                      label: 'Correo electrónico',
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       prefixIcon: const Icon(Icons.email_outlined),
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Ingresa tu Gmail o Correo electrónico';
-                        }
-                        // Corrección: Validación de email más robusta
+                        if (value == null || value.isEmpty) return 'Ingresa tu correo';
                         if (!value.contains('@') || !value.contains('.')) {
-                          return 'Gmail o Correo electrónico inválido';
+                          return 'Correo inválido';
                         }
                         return null;
                       },
@@ -288,62 +173,76 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                       controller: _telefonoController,
                       keyboardType: TextInputType.phone,
                       prefixIcon: const Icon(Icons.phone_outlined),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Ingresa tu teléfono';
-                        }
-                        return null;
-                      },
+                      validator: (value) =>
+                          value == null || value.isEmpty ? 'Ingresa tu teléfono' : null,
                     ),
                     const SizedBox(height: 16),
+
+                    // Profesión seleccionable;
                     if (_tipoUsuario == 'profesional') ...[
-                      InputPersonalizado(
-                        label: 'Profesión',
-                        controller: _profesionController,
-                        prefixIcon: const Icon(Icons.work_outline),
+                      const Text(
+                        'Profesión',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColores.texto,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.work_outline),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        hint: const Text("Selecciona tu profesión"),
+                        items: const [
+                          DropdownMenuItem(
+                              value: 'Limpieza de casas',
+                              child: Text('Limpieza de casas')),
+                          DropdownMenuItem(
+                              value: 'Lavado de autos',
+                              child: Text('Lavado de autos')),
+                        ],
+                        onChanged: (value) {
+                          _profesionController.text = value!;
+                        },
                         validator: (value) {
-                          // --- 2. VALIDACIÓN CORREGIDA ---
-                          // Solo valida si el tipo de usuario es profesional
                           if (_tipoUsuario == 'profesional' &&
                               (value == null || value.isEmpty)) {
-                            return 'Ingresa tu profesión';
+                            return 'Selecciona una profesión';
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 16),
                     ],
+
                     InputPersonalizado(
                       label: 'Contraseña',
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                        ),
+                        icon: Icon(_obscurePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined),
                         onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
+                          setState(() => _obscurePassword = !_obscurePassword);
                         },
                       ),
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Ingresa una contraseña';
-                        }
-                        if (value.length < 6) {
-                          return 'Mínimo 6 caracteres';
-                        }
+                        if (value == null || value.isEmpty) return 'Ingresa una contraseña';
+                        if (value.length < 6) return 'Mínimo 6 caracteres';
                         return null;
                       },
                     ),
                     const SizedBox(height: 32),
+
                     BotonPersonalizado(
                       texto: 'Registrarse',
-                      // --- 3. CONECTANDO EL BOTÓN ---
                       onPressed: _registrar,
                       cargando: authProvider.cargando,
                       color: const Color(0xFF064E7D),
@@ -354,6 +253,57 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _tipoCuentaOpcion(String tipo, String texto, String asset) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _tipoUsuario = tipo),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: _tipoUsuario == tipo
+                  ? const Color(0xFF064E7D)
+                  : Colors.grey.shade300,
+              width: 2,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(10)),
+                child: Image.asset(asset, height: 100, fit: BoxFit.cover),
+              ),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _tipoUsuario == tipo
+                      ? const Color(0xFF064E7D)
+                      : Colors.grey.shade200,
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(10),
+                  ),
+                ),
+                child: Text(
+                  texto,
+                  style: TextStyle(
+                    color: _tipoUsuario == tipo
+                        ? Colors.white
+                        : AppColores.texto,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

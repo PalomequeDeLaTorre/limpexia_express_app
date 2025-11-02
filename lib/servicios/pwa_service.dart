@@ -10,15 +10,15 @@ class PwaService {
   }
 
   void _verificarInstalacion() {
-    // En web, verificaríamos con JavaScript
-    // Para este ejemplo simplificado
+    // En web, verificaríamos con JavaScript;
+    // Para este ejemplo simplificado;
     _esInstalable = true;
     _esInstalada = false;
   }
 
   Future<bool> instalarApp() async {
     try {
-      // Lógica de instalación PWA
+      // Lógica de instalación PWA;
       await Future.delayed(const Duration(seconds: 1));
       _esInstalada = true;
       return true;
@@ -28,7 +28,7 @@ class PwaService {
   }
 
   bool esModoOffline() {
-    // Verificar conectividad
+    // Verificar conectividad;
     return false;
   }
 }

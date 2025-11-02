@@ -12,8 +12,6 @@ import '../utilidades/colores.dart';
 import '../utilidades/helpers.dart';
 import 'dashboard_cliente.dart';
 
-
-
 class PantallaPago extends StatelessWidget {
   const PantallaPago({super.key, required Servicio servicio});
 
@@ -22,6 +20,7 @@ class PantallaPago extends StatelessWidget {
     return const Placeholder();
   }
 }
+
 /*
 class PantallaPago extends StatefulWidget {
   final Servicio servicio;

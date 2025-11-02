@@ -4,7 +4,7 @@ class Reserva {
   final String clienteId;
   final String profesionalId;
   final DateTime fechaReserva;
-  final String estado; // 'pendiente', 'confirmada', 'completada', 'cancelada'
+  final String estado; 
   final double precio;
   final String? notas;
   final DateTime fechaCreacion;

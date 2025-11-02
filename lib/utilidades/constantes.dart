@@ -5,12 +5,9 @@ class Constantes {
   static const double espaciado = 16.0;
   
   static const List<String> categoriasServicios = [
-    'Plomería',
-    'Electricidad',
-    'Limpieza',
-    'Carpintería',
-    'Jardinería',
-    'Pintura',
+    'Limpieza de Casas',
+    'Limpieza de Autos',
+   
   ];
   
   static const String mensajeCargando = 'Cargando...';

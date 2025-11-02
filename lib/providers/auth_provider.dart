@@ -3,7 +3,6 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
 class AuthProvider extends ChangeNotifier {
-  // CAMBIA ESTO: Usar getters en lugar de instancias directas
   FirebaseAuth get _auth => FirebaseAuth.instance;
   FirebaseDatabase get _database => FirebaseDatabase.instance;
 
@@ -11,6 +10,17 @@ class AuthProvider extends ChangeNotifier {
   String? errorMensaje;
   String? userRole;
 
+  // Campos añadidos;
+  String? _nombreUsuario;
+  String? _profesion;
+  String? _fotoPerfilUrl;
+
+  // Getters públicos;
+  String? get nombreUsuario => _nombreUsuario;
+  String? get profesion => _profesion;
+  String? get fotoPerfilUrl => _fotoPerfilUrl;
+
+ // Iniciar sesión;
   Future<bool> iniciarSesion(String email, String password) async {
     try {
       cargando = true;
@@ -18,41 +28,31 @@ class AuthProvider extends ChangeNotifier {
       userRole = null;
       notifyListeners();
 
-      // VERIFICAR que Firebase esté listo
-      if (_auth.app.name.isEmpty) {
-        throw Exception("Firebase no está inicializado");
-      }
-
-      // Iniciar sesión en Firebase Auth
       final userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
       final user = userCredential.user;
-      if (user == null) {
-        throw Exception("No se pudo obtener el usuario después de iniciar sesión.");
-      }
+      if (user == null) throw Exception("No se pudo obtener el usuario.");
 
-      // Obtener el rol desde Realtime Database
+      // Obtener datos desde Realtime Database;
       final userRef = _database.ref('usuarios/${user.uid}');
       final snapshot = await userRef.get();
 
       if (snapshot.exists) {
-        final data = snapshot.value as Map<dynamic, dynamic>;
+        final data = Map<String, dynamic>.from(snapshot.value as Map);
         userRole = data['rol'] as String?;
-
-        if (userRole == null) {
-          throw Exception('El rol del usuario no está definido en la base de datos.');
-        }
+        _nombreUsuario = data['nombre'] as String?;
+        _profesion = data['profesion'] as String?;
+        _fotoPerfilUrl = data['fotoPerfilUrl'] as String?;
       } else {
-        throw Exception('No se encontraron datos de usuario en la base de datos.');
+        throw Exception('Datos de usuario no encontrados en la base de datos.');
       }
 
       cargando = false;
       notifyListeners();
       return true;
-
     } catch (e) {
       cargando = false;
       errorMensaje = _obtenerMensajeDeError(e);
@@ -61,6 +61,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // Registrar usuario;
   Future<bool> registrarUsuario(
     String email,
     String password,
@@ -75,82 +76,76 @@ class AuthProvider extends ChangeNotifier {
       userRole = null;
       notifyListeners();
 
-      // VERIFICAR que Firebase esté listo
-      if (_auth.app.name.isEmpty) {
-        throw Exception("Firebase no está inicializado");
-      }
-
-      // Crear el usuario en Firebase Auth
       final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
       final user = userCredential.user;
-      if (user == null) {
-        throw Exception("No se pudo crear el usuario.");
-      }
+      if (user == null) throw Exception("No se pudo crear el usuario.");
 
-      // Preparar los datos para Realtime Database
+      // Datos a guardar;
       final Map<String, dynamic> userData = {
         'uid': user.uid,
         'email': email,
         'nombre': nombre,
         'telefono': telefono,
         'rol': rol,
+        'profesion': profesion ?? '',
+        'fotoPerfilUrl': '', 
       };
 
-      if (rol == 'profesional' && profesion != null && profesion.isNotEmpty) {
-        userData['profesion'] = profesion;
-      }
-
-      // guardar los datos en Realtime Database
+      // Guardar en RTDB;
       final userRef = _database.ref('usuarios/${user.uid}');
       await userRef.set(userData);
 
       userRole = rol;
+      _nombreUsuario = nombre;
+      _profesion = profesion ?? '';
+      _fotoPerfilUrl = '';
+
       cargando = false;
       notifyListeners();
       return true;
-
     } catch (e) {
       cargando = false;
-      if (e is FirebaseAuthException) {
-        print('Código de error: ${e.code}');
-        print('Mensaje de error: ${e.message}');
-      } else {
-        print('Error genérico: $e');
-      }
       errorMensaje = _obtenerMensajeDeError(e);
       notifyListeners();
       return false;
     }
   }
 
-  // --- MÉTODO PARA CERRAR SESIÓN ---
+  // Cerrar sesión;
   Future<void> cerrarSesion() async {
     await _auth.signOut();
     userRole = null;
+    _nombreUsuario = null;
+    _profesion = null;
+    _fotoPerfilUrl = null;
     notifyListeners();
   }
 
+  // Actualizar foto de perfil;
+  Future<void> actualizarFotoPerfil(String url) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+
+    await _database.ref('usuarios/$uid/fotoPerfilUrl').set(url);
+    _fotoPerfilUrl = url;
+    notifyListeners();
+  }
+
+  // Mensajes de error;
   String _obtenerMensajeDeError(dynamic error) {
-    String mensaje = error.toString();
-    
-    // Errores de Login
+    final mensaje = error.toString();
+
     if (mensaje.contains('user-not-found')) return "No existe una cuenta con este correo.";
     if (mensaje.contains('wrong-password')) return "Contraseña incorrecta.";
     if (mensaje.contains('invalid-email')) return "Correo no válido.";
-
-    // Errores de Registro
     if (mensaje.contains('email-already-in-use')) return "Este correo ya está registrado.";
     if (mensaje.contains('weak-password')) return "La contraseña es muy débil (mínimo 6 caracteres).";
-    
-    // Errores de RTDB
-    if (mensaje.contains('Rol no definido')) return "Tu cuenta no tiene un rol asignado.";
-    if (mensaje.contains('Datos de usuario no encontrados')) return "No pudimos encontrar tus datos de perfil.";
-    
-    // Error genérico
+    if (mensaje.contains('Datos de usuario')) return "No pudimos encontrar tus datos.";
+
     return "Ocurrió un error inesperado. Intenta de nuevo.";
   }
 }

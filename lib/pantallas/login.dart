@@ -26,12 +26,12 @@ class _PantallaLoginState extends State<PantallaLogin> {
   }
 
   Future<void> _iniciarSesion() async {
-    // Validar el formulario
+    // Validar el formulario;
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
-    // Obtener email y password
+    // Obtener email y password;
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
@@ -67,7 +67,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: Stack(
         children: [
-          // Imagen superior
+          // Imagen superior;
           Positioned(
             top: 0,
             left: 0,
@@ -79,7 +79,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
             ),
           ),
 
-          // Imagen inferior
+          // Imagen inferior;
           Positioned(
             bottom: -10,
             left: 0,
@@ -91,7 +91,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
             ),
           ),
 
-          // Contenido principal
+          // Contenido principal;
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -174,8 +174,8 @@ class _PantallaLoginState extends State<PantallaLogin> {
                       const SizedBox(height: 24),
                       BotonPersonalizado(
                         texto: 'Iniciar Sesión',
-                        onPressed: _iniciarSesion, // <--- Conectado
-                        cargando: authProvider.cargando, // <--- Conectado
+                        onPressed: _iniciarSesion, 
+                        cargando: authProvider.cargando, 
                         color: const Color(0xFF064E7D),
                       ),
                       const SizedBox(height: 16),
