@@ -407,6 +407,7 @@ class _DashboardClienteState extends State<DashboardCliente> {
             const SizedBox(height: 32),
             Center(
               child: Text('© 2025 Limpexia. Todos los derechos reservados.',
+              textAlign: TextAlign.center, 
                   style: TextStyle(color: Colors.grey[600], fontSize: 12)),
             ),
           ],
@@ -573,7 +574,7 @@ class _DashboardClienteState extends State<DashboardCliente> {
 
   Widget _paginaChat() {
     return const Center(
-      child: Text('💬 Aquí irá la sección de Chat',
+      child: Text('💬 Aquí irá la sección de Chat con el Profesional',
           style: TextStyle(fontSize: 18, color: Colors.black54)),
     );
   }
