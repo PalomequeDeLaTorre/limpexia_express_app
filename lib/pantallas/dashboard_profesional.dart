@@ -126,7 +126,7 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
                       radius: 36,
                        backgroundImage: fotoUsuario.isNotEmpty
                        ? NetworkImage(fotoUsuario)
-                        : const AssetImage('assets/profesional.jpg') as ImageProvider,
+                        : const AssetImage('assets/icono_usuario.jpg') as ImageProvider,
                        ),
                     const SizedBox(width: 12),
                     Expanded(

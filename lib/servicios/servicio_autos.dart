@@ -1,3 +1,4 @@
+import '../pantallas/dashboard_cliente.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../utilidades/colores.dart';
@@ -12,11 +13,11 @@ class ServicioAutos extends StatefulWidget {
 
 class _ServicioAutosState extends State<ServicioAutos> {
   late GoogleMapController _mapController;
-  final LatLng _ubicacionCliente = const LatLng(19.4326, -99.1332); 
+  final LatLng _ubicacionCliente = const LatLng(19.4326, -99.1332);
   final Set<Marker> _marcadores = {};
   final Set<String> _seleccionados = {};
-
   bool _buscando = false;
+  int _paginaActual = 0; // 0 = Servicio, 1 = Chat
 
   final List<String> _servicios = [
     'Pulido',
@@ -62,7 +63,6 @@ class _ServicioAutosState extends State<ServicioAutos> {
 
     setState(() => _buscando = true);
 
-    // Simular búsqueda durante 5 segundos;
     Timer(const Duration(seconds: 5), () {
       if (mounted) {
         setState(() => _buscando = false);
@@ -81,191 +81,214 @@ class _ServicioAutosState extends State<ServicioAutos> {
       backgroundColor: AppColores.fondo,
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 6, 78, 125),
-        title: const Text('Limpieza para Autos', style: TextStyle(color: Colors.white)),
+        title: Text(
+          _paginaActual == 0 ? 'Limpieza para Autos' : 'Chat con Profesional',
+          style: const TextStyle(color: Colors.white),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (_paginaActual == 1) {
+              setState(() => _paginaActual = 0);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardCliente()),
+              );
+            }
+          },
         ),
         centerTitle: true,
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Google Maps;
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: SizedBox(
-                      height: 240,
-                      child: GoogleMap(
-                        onMapCreated: (controller) => _mapController = controller,
-                        initialCameraPosition: CameraPosition(
-                          target: _ubicacionCliente,
-                          zoom: 14,
-                        ),
-                        markers: _marcadores,
-                        zoomControlsEnabled: false,
-                        myLocationEnabled: true,
+      body: _paginaActual == 0 ? _paginaServicio() : _paginaChat(),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _paginaActual,
+        onTap: (index) => setState(() => _paginaActual = index),
+        selectedItemColor: const Color.fromARGB(255, 6, 78, 125),
+        unselectedItemColor: Colors.grey,
+        backgroundColor: Colors.white,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.local_car_wash), label: 'Servicio'),
+          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
+        ],
+      ),
+    );
+  }
+
+  Widget _paginaServicio() {
+    return Stack(
+      children: [
+        SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Mapa
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: SizedBox(
+                    height: 240,
+                    child: GoogleMap(
+                      onMapCreated: (controller) => _mapController = controller,
+                      initialCameraPosition: CameraPosition(
+                        target: _ubicacionCliente,
+                        zoom: 14,
                       ),
+                      markers: _marcadores,
+                      zoomControlsEnabled: false,
+                      myLocationEnabled: true,
                     ),
                   ),
+                ),
+                const SizedBox(height: 16),
 
-                  const SizedBox(height: 16),
-
-                  const Text(
-                    'Servicios disponibles',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColores.texto,
-                    ),
+                const Text(
+                  'Servicios disponibles',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColores.texto,
                   ),
-                  const SizedBox(height: 8),
+                ),
+                const SizedBox(height: 8),
 
-                  // Lista de servicios;
-                  Column(
-                    children: _servicios.map((s) {
-                      final activo = _seleccionados.contains(s);
-                      return Card(
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          leading: Icon(
-                            activo ? Icons.check_circle : Icons.local_car_wash_outlined,
+                // Lista de servicios
+                Column(
+                  children: _servicios.map((s) {
+                    final activo = _seleccionados.contains(s);
+                    return Card(
+                      elevation: 1,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: Icon(
+                          activo ? Icons.check_circle : Icons.local_car_wash_outlined,
+                          color: activo ? AppColores.secundario : AppColores.texto,
+                        ),
+                        title: Text(
+                          s,
+                          style: TextStyle(
+                            fontWeight: activo ? FontWeight.bold : FontWeight.normal,
                             color: activo ? AppColores.secundario : AppColores.texto,
                           ),
-                          title: Text(
-                            s,
-                            style: TextStyle(
-                              fontWeight: activo ? FontWeight.bold : FontWeight.normal,
-                              color: activo ? AppColores.secundario : AppColores.texto,
-                            ),
-                          ),
-                          trailing: Checkbox(
-                            value: activo,
-                            onChanged: (_) => _toggleServicio(s),
-                            activeColor: AppColores.secundario,
-                          ),
-                          onTap: () => _toggleServicio(s),
                         ),
-                      );
-                    }).toList(),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Botón Buscar profesional;
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _buscando ? null : _buscarProfesional,
-                        icon: const Icon(Icons.search, color: Colors.white),
-                        label: const Text(
-                          'Buscar profesional',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            ),
+                        trailing: Checkbox(
+                          value: activo,
+                          onChanged: (_) => _toggleServicio(s),
+                          activeColor: AppColores.secundario,
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(255, 6, 78, 125),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        onTap: () => _toggleServicio(s),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 12),
+
+                // Botón Buscar profesional
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _buscando ? null : _buscarProfesional,
+                      icon: const Icon(Icons.search, color: Colors.white),
+                      label: const Text(
+                        'Buscar profesional',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 6, 78, 125),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
                   ),
+                ),
 
-                  const SizedBox(height: 18),
+                const SizedBox(height: 18),
+                const Text(
+                  'Descubre más',
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColores.texto),
+                ),
+                const SizedBox(height: 12),
 
-                  // Carrusel Descubre más;
-                  const Text(
-                    'Descubre más',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColores.texto),
+                SizedBox(
+                  height: 140,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _catalogoImgs.length,
+                    itemBuilder: (context, i) {
+                      final img = _catalogoImgs[i];
+                      return Container(
+                        width: 220,
+                        margin: EdgeInsets.only(left: i == 0 ? 0 : 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          image: DecorationImage(
+                              image: NetworkImage(img), fit: BoxFit.cover),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            )
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                  const SizedBox(height: 12),
-
-                  SizedBox(
-                    height: 140,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _catalogoImgs.length,
-                      itemBuilder: (context, i) {
-                        final img = _catalogoImgs[i];
-                        return Container(
-                          width: 220,
-                          margin: EdgeInsets.only(left: i == 0 ? 0 : 12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            image: DecorationImage(image: NetworkImage(img), fit: BoxFit.cover),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 6,
-                                offset: const Offset(0, 3),
-                              )
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                ),
+                const SizedBox(height: 22),
+                Center(
+                  child: Text(
+                    '© 2025 Limpexia. Todos los derechos reservados.',
+                    style: TextStyle(
+                        color: Colors.grey.shade600, fontSize: 12),
                   ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
 
-                  const SizedBox(height: 22),
-                  Center(
-                    child: Text(
-                      '© 2025 Limpexia. Todos los derechos reservados.',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                    ),
+        if (_buscando)
+          Container(
+            color: Colors.black45,
+            child: const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(color: Colors.white),
+                  SizedBox(height: 12),
+                  Text(
+                    'Buscando profesionales cerca de ti...',
+                    style: TextStyle(color: Colors.white),
                   ),
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
           ),
+      ],
+    );
+  }
 
-          // Indicador de carga;
-          if (_buscando)
-            Container(
-              color: Colors.black45,
-              child: const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(color: Colors.white),
-                    SizedBox(height: 12),
-                    Text(
-                      'Buscando profesionales cerca de ti...',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-          // Botón de Chat flotante;
-          Positioned(
-            bottom: 20,
-            right: 16,
-            child: FloatingActionButton.small(
-              heroTag: 'chat',
-              backgroundColor: AppColores.secundario,
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Abrir chat')),
-                );
-              },
-              child: const Icon(Icons.chat, color: Colors.white),
-            ),
-          ),
-        ],
+  Widget _paginaChat() {
+    return const Center(
+      child: Text(
+        '💬 Aquí irá la sección de Chat',
+        style: TextStyle(fontSize: 18, color: Colors.black54),
       ),
     );
   }
