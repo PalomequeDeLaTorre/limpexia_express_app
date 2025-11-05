@@ -129,6 +129,29 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
                           MaterialPageRoute(builder: (_) => const PantallaLogin()),
                         );
                       }
+                    } else if (value == 'perfil') {
+                     
+                      if (context.mounted) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PerfilProfesionalPage(
+                              nombreSimulado: nombreUsuario,
+                              fotoUrl: fotoUsuario,
+                            ),
+                          ),
+                        );
+                      }
+                    } else if (value == 'pagos') {
+                     
+                      if (context.mounted) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PagosFacturasPage(),
+                          ),
+                        );
+                      }
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('$value seleccionado')),
@@ -448,7 +471,7 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
   Widget _paginaChat() {
     return const Center(
       child: Text(
-        "💬 Aquí irá la sección de Chat con el Cliente",
+        "💬 Buzón de mensajes vacío",
         style: TextStyle(fontSize: 18, color: Colors.black54),
         textAlign: TextAlign.center,
       ),
@@ -473,3 +496,157 @@ class OlaAppBarClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(OlaAppBarClipper oldClipper) => false;
 }
+
+
+class PerfilProfesionalPage extends StatelessWidget {
+  final String nombreSimulado;
+  final String fotoUrl;
+
+  const PerfilProfesionalPage({
+    super.key,
+    required this.nombreSimulado,
+    required this.fotoUrl,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+
+    final simulatedEmail = _construirCorreoSimulado(nombreSimulado);
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 6, 78, 125),
+        elevation: 0,
+        leading: const BackButton(color: Color.fromARGB(255, 255, 255, 255)),
+        title: const Text('Mi perfil', style: TextStyle(color: Color.fromARGB(255, 255, 255, 255))),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipOval(
+                child: Container(
+                  width: 140,
+                  height: 140,
+                  color: Colors.grey[200],
+                  child: fotoUrl.isNotEmpty
+                      ? Image.network(fotoUrl, fit: BoxFit.cover, errorBuilder: (context, e, s) {
+                          return Image.asset('assets/icono_usuario.jpg', fit: BoxFit.cover);
+                        })
+                      : Image.asset('assets/icono_usuario.jpg', fit: BoxFit.cover),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                nombreSimulado,
+                style: const TextStyle(
+                    fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                simulatedEmail,
+                style: const TextStyle(fontSize: 14, color: Colors.black54),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 22),
+              ElevatedButton(
+                onPressed: () async {
+     
+                  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                  await authProvider.cerrarSesion();
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const PantallaLogin()),
+                      (route) => false,
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 255, 0, 0),
+                  padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.logout, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text('Cerrar sesión', style: TextStyle(color: Colors.white)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _construirCorreoSimulado(String nombre) {
+    try {
+      final cleaned = nombre.toLowerCase().replaceAll(RegExp(r'\s+'), '.');
+      final safe = cleaned.replaceAll(RegExp(r'[^a-z0-9\._\-]'), '');
+      if (safe.isEmpty) return 'usuario@ejemplo.com';
+      return '$safe@ejemplo.com';
+    } catch (e) {
+      return 'usuario@ejemplo.com';
+    }
+  }
+}
+
+
+class PagosFacturasPage extends StatelessWidget {
+  const PagosFacturasPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColores.fondo,
+      appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 6, 78, 125),
+        elevation: 0,
+        leading: const BackButton(color: Color.fromARGB(255, 255, 255, 255)),
+        title: const Text('Pagos y facturas', style: TextStyle(color: Color.fromARGB(255, 255, 255, 255))),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 28),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(color: Colors.grey.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 6))
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(Icons.receipt_long, size: 48, color: Colors.grey),
+              SizedBox(height: 12),
+              Text(
+                'No tienes pagos ni facturas',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Cuando tengas movimientos aparecerán aquí.',
+                style: TextStyle(fontSize: 14, color: Colors.black54),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+

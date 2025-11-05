@@ -285,7 +285,7 @@ class _ServicioAutosState extends State<ServicioAutos> {
   Widget _paginaChat() {
     return const Center(
       child: Text(
-        '💬 Aquí irá la sección de Chat',
+        '💬 Buzón de mensajes vacío',
         style: TextStyle(fontSize: 18, color: Colors.black54),
       ),
     );

@@ -87,7 +87,8 @@ class _DashboardClienteState extends State<DashboardCliente> {
             } else {
               serviciosSolicitados.add({'data': item.toString()});
             }
-          }
+          };
+
         }
       }
     } catch (e) {
@@ -258,11 +259,20 @@ class _DashboardClienteState extends State<DashboardCliente> {
                         );
                       }
                     } else if (value == 'perfil') {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content:
-                                Text('Perfil del usuario')),
-                      );
+
+                      if (context.mounted) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PantallaPerfil(
+                              nombre: nombre,
+                              fotoUrl: fotoUrl,
+                              correo:
+                                  _auth.currentUser?.email ?? 'no disponible',
+                            ),
+                          ),
+                        );
+                      }
                     }
                   },
                 ),
@@ -557,7 +567,7 @@ class _DashboardClienteState extends State<DashboardCliente> {
                           ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                   content:
-                                      Text('Ver detalles del servicio')));
+                                      Text('Ver detalles del servicio'))); 
                         },
                         child: const Text('Ver'),
                       ),
@@ -575,7 +585,7 @@ class _DashboardClienteState extends State<DashboardCliente> {
   Widget _paginaChat() {
     return const Center(
       child: Text(
-        '💬 Aquí irá la sección de Chat con el Profesional',
+        '💬 Buzón de mensajes vacío',
           style: TextStyle(fontSize: 18, color: Colors.black54),textAlign: TextAlign.center,),
     );
   }
@@ -649,4 +659,113 @@ class OlaAppBarClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(OlaAppBarClipper oldClipper) => false;
+}
+
+
+class PantallaPerfil extends StatelessWidget {
+  final String nombre;
+  final String fotoUrl;
+  final String correo;
+
+  const PantallaPerfil({
+    super.key,
+    required this.nombre,
+    required this.fotoUrl,
+    required this.correo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 6, 78, 125),
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          'Mi perfil',
+          style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
+        ),
+        iconTheme: const IconThemeData(color: Color.fromARGB(255, 255, 255, 255)), 
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 28.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircleAvatar(
+                  radius: 70,
+                  backgroundImage: fotoUrl.isNotEmpty
+                      ? NetworkImage(fotoUrl)
+                      : const AssetImage('assets/icono_usuario.jpg')
+                          as ImageProvider,
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  nombre,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  correo,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[700],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                
+                
+                const SizedBox(height: 24),
+                Center(
+                child: SizedBox(
+                  width: 160,
+                  child: ElevatedButton(
+                  onPressed: () async {
+                   await FirebaseAuth.instance.signOut();
+                    if (context.mounted) {
+                   Navigator.of(context).pushReplacement(
+                   MaterialPageRoute(builder: (_) => const PantallaLogin()),
+                   );
+                  }
+                  },
+                 style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 255, 0, 0),
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                  shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                   ),
+                  ),
+                  child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.logout, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text('Cerrar sesión', style: TextStyle(color: Colors.white)),
+                  ],
+                ),
+                ),
+                ),
+               ),
+
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
