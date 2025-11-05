@@ -26,12 +26,10 @@ class _PantallaLoginState extends State<PantallaLogin> {
   }
 
   Future<void> _iniciarSesion() async {
-    // Validar el formulario;
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
-    // Obtener email y password;
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
@@ -67,7 +65,6 @@ class _PantallaLoginState extends State<PantallaLogin> {
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: Stack(
         children: [
-          // Imagen superior;
           Positioned(
             top: 0,
             left: 0,
@@ -79,7 +76,6 @@ class _PantallaLoginState extends State<PantallaLogin> {
             ),
           ),
 
-          // Imagen inferior;
           Positioned(
             bottom: -10,
             left: 0,
@@ -91,7 +87,6 @@ class _PantallaLoginState extends State<PantallaLogin> {
             ),
           ),
 
-          // Contenido principal;
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -171,6 +166,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
                           return null;
                         },
                       ),
+
                       const SizedBox(height: 24),
                       BotonPersonalizado(
                         texto: 'Iniciar Sesión',
@@ -190,6 +186,64 @@ class _PantallaLoginState extends State<PantallaLogin> {
                         },
                         outline: true,
                         color: const Color(0xFF064E7D),
+                      ),
+ 
+                      const SizedBox(height: 20),
+                      Row(
+                      children: const [
+                       Expanded(
+                       child: Divider(
+                       color: Colors.grey,
+                       thickness: 1,
+                       endIndent: 10,
+                      ),
+                     ),
+                    Text(
+                        'O',
+                        style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w600,
+                        ),
+                       ),
+                      Expanded(
+                        child: Divider(
+                        color: Colors.grey,
+                        thickness: 1,
+                        indent: 10,
+                       ),
+                       ),
+                      ],
+                     ),
+                    const SizedBox(height: 12),
+                      SizedBox(
+                         width: double.infinity,
+                         height: 50,
+                         child: ElevatedButton.icon(
+                         onPressed: () {
+      
+                         },
+                        icon: Image.asset(
+                        'assets/google_logo.jpg',
+                        height: 24,
+                        width: 24,
+                        ),
+                        label: const Text(
+                        'Continuar con Google',
+                        style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: 16,
+                         ),
+                        ),
+                       style: ElevatedButton.styleFrom(
+                       backgroundColor: Colors.white,
+                       side: const BorderSide(color: Colors.grey),
+                       shape: const RoundedRectangleBorder(
+                       borderRadius: BorderRadius.all(Radius.circular(8)),
+                       ),
+                       elevation: 1,
+                       ),
+                       ),
                       ),
                     ],
                   ),

@@ -574,8 +574,9 @@ class _DashboardClienteState extends State<DashboardCliente> {
 
   Widget _paginaChat() {
     return const Center(
-      child: Text('💬 Aquí irá la sección de Chat con el Profesional',
-          style: TextStyle(fontSize: 18, color: Colors.black54)),
+      child: Text(
+        '💬 Aquí irá la sección de Chat con el Profesional',
+          style: TextStyle(fontSize: 18, color: Colors.black54),textAlign: TextAlign.center,),
     );
   }
 
@@ -632,7 +633,6 @@ class _DashboardClienteState extends State<DashboardCliente> {
   }
 }
 
-/// ClipPath personalizado para AppBar ondulada
 class OlaAppBarClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {

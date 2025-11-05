@@ -17,7 +17,7 @@ class _ServicioAutosState extends State<ServicioAutos> {
   final Set<Marker> _marcadores = {};
   final Set<String> _seleccionados = {};
   bool _buscando = false;
-  int _paginaActual = 0; // 0 = Servicio, 1 = Chat
+  int _paginaActual = 0; 
 
   final List<String> _servicios = [
     'Pulido',
@@ -124,7 +124,7 @@ class _ServicioAutosState extends State<ServicioAutos> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Mapa
+  
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
                   child: SizedBox(
@@ -153,7 +153,6 @@ class _ServicioAutosState extends State<ServicioAutos> {
                 ),
                 const SizedBox(height: 8),
 
-                // Lista de servicios
                 Column(
                   children: _servicios.map((s) {
                     final activo = _seleccionados.contains(s);
@@ -187,7 +186,6 @@ class _ServicioAutosState extends State<ServicioAutos> {
                 ),
                 const SizedBox(height: 12),
 
-                // Botón Buscar profesional
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: SizedBox(

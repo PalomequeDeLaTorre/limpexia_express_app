@@ -206,7 +206,6 @@ class _ServicioCasasState extends State<ServicioCasas> {
 
                 const SizedBox(height: 12),
 
-                // Botón Buscar profesional
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: SizedBox(
