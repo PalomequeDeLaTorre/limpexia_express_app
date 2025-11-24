@@ -1,8 +1,11 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../utilidades/colores.dart';
 import 'login.dart';
+import '../servicios/usuario_service.dart';
+import 'pestana_solicitudes.dart';
 
 class DashboardProfesional extends StatefulWidget {
   const DashboardProfesional({super.key});
@@ -12,6 +15,7 @@ class DashboardProfesional extends StatefulWidget {
 }
 
 class _DashboardProfesionalState extends State<DashboardProfesional> {
+  final UsuarioService _usuarioService = UsuarioService();
   double calificacionPromedio = 4.6;
   bool disponible = true;
   List<String> servicios = [];
@@ -51,8 +55,10 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
       builder: (context) => SizedBox(
         height: 180,
         child: Center(
-          child: Text("No tienes notificaciones nuevas",
-              style: TextStyle(color: Colors.grey[700])),
+          child: Text(
+            "No tienes notificaciones nuevas",
+            style: TextStyle(color: Colors.grey[700]),
+          ),
         ),
       ),
     );
@@ -111,14 +117,19 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
                 PopupMenuButton<String>(
                   icon: const Icon(Icons.menu, color: Colors.white),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   itemBuilder: (context) => const [
                     PopupMenuItem(value: 'perfil', child: Text('👤 Mi perfil')),
                     PopupMenuItem(
-                        value: 'pagos', child: Text('💳 Pagos y facturas')),
+                      value: 'pagos',
+                      child: Text('💳 Pagos y facturas'),
+                    ),
                     PopupMenuDivider(),
                     PopupMenuItem(
-                        value: 'cerrar', child: Text('🔴 Cerrar sesión')),
+                      value: 'cerrar',
+                      child: Text('🔴 Cerrar sesión'),
+                    ),
                   ],
                   onSelected: (value) async {
                     if (value == 'cerrar') {
@@ -126,11 +137,12 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
                       if (context.mounted) {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (_) => const PantallaLogin()),
+                          MaterialPageRoute(
+                            builder: (_) => const PantallaLogin(),
+                          ),
                         );
                       }
                     } else if (value == 'perfil') {
-                     
                       if (context.mounted) {
                         Navigator.push(
                           context,
@@ -143,7 +155,6 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
                         );
                       }
                     } else if (value == 'pagos') {
-                     
                       if (context.mounted) {
                         Navigator.push(
                           context,
@@ -167,45 +178,24 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
       body: _paginaActual == 0
           ? _paginaHome(nombreUsuario, profesion, fotoUsuario)
           : _paginaActual == 1
-              ? _paginaLimpiezas()
-              : _paginaChat(),
+          ? const PestanaSolicitudes()
+          : _paginaChat(),
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _paginaActual,
         onTap: (index) {
           setState(() => _paginaActual = index);
-
-          if (index == 1) {
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                title: const Text(
-                  "Limpieza",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                content: const Text(
-                  "Actualmente no tienes ningún servicio solicitado.",
-                  style: TextStyle(fontSize: 16),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text("OK", style: TextStyle(color: Colors.blue)),
-                  ),
-                ],
-              ),
-            );
-          }
         },
+        
         selectedItemColor: const Color.fromARGB(255, 6, 78, 125),
         unselectedItemColor: Colors.grey,
         backgroundColor: Colors.white,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.local_laundry_service), label: 'Limpiezas'),
+            icon: Icon(Icons.local_laundry_service),
+            label: 'Limpiezas',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
         ],
       ),
@@ -225,20 +215,24 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
                   radius: 36,
                   backgroundImage: foto.isNotEmpty
                       ? NetworkImage(foto)
-                      : const AssetImage('assets/icono_usuario.jpg')
-                          as ImageProvider,
+                      : const AssetImage('assets/icono_usuario.jpg') as ImageProvider,
                 ),
                 const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Hola, $nombre 👋",
-                        style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black)),
-                    Text(profesion,
-                        style: const TextStyle(fontSize: 14, color: Colors.black)),
+                    Text(
+                      "Hola, $nombre 👋",
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    Text(
+                      profesion,
+                      style: const TextStyle(fontSize: 14, color: Colors.black),
+                    ),
                   ],
                 ),
               ],
@@ -253,11 +247,10 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
 
   Widget _paginaLimpiezas() {
     final List<List<Color>> coloresTarifas = [
-     [Colors.orangeAccent.shade100, Colors.orangeAccent.shade200], 
-     [Colors.deepOrange.shade400, Colors.deepOrange.shade700],    
-     [Colors.redAccent.shade400, Colors.red.shade700],             
+      [Colors.orangeAccent.shade100, Colors.orangeAccent.shade200],
+      [Colors.deepOrange.shade400, Colors.deepOrange.shade700],
+      [Colors.redAccent.shade400, Colors.red.shade700],
     ];
-
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -270,8 +263,10 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
         ),
         const SizedBox(height: 16),
         if (servicios.isEmpty)
-          const Text("No hay servicios configurados.",
-              style: TextStyle(color: Colors.grey)),
+          const Text(
+            "No hay servicios configurados.",
+            style: TextStyle(color: Colors.grey),
+          ),
         if (servicios.isNotEmpty)
           Center(
             child: Wrap(
@@ -279,29 +274,35 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
               runSpacing: 10,
               alignment: WrapAlignment.center,
               children: servicios.map((servicio) {
-                final bool esAuto =
-                    ["Pulido", "Encerado", "Interior"].contains(servicio);
+                final bool esAuto = [
+                  "Pulido",
+                  "Encerado",
+                  "Interior",
+                ].contains(servicio);
                 final icono = esAuto
                     ? Icons.directions_car
                     : Icons.cleaning_services_rounded;
                 return Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: esAuto
                           ? [
                               const Color.fromARGB(255, 6, 78, 125),
-                              const Color.fromARGB(255, 12, 110, 190)
+                              const Color.fromARGB(255, 12, 110, 190),
                             ]
                           : [AppColores.secundario, Colors.blueAccent],
                     ),
                     borderRadius: BorderRadius.circular(30),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.grey.withOpacity(0.3),
-                          blurRadius: 6,
-                          offset: const Offset(2, 4))
+                        color: Colors.grey.withOpacity(0.3),
+                        blurRadius: 6,
+                        offset: const Offset(2, 4),
+                      ),
                     ],
                   ),
                   child: Row(
@@ -309,9 +310,13 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
                     children: [
                       Icon(icono, color: Colors.white, size: 20),
                       const SizedBox(width: 8),
-                      Text(servicio,
-                          style: const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.w600)),
+                      Text(
+                        servicio,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -324,7 +329,7 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
-  
+
         if (tarifas.isNotEmpty)
           Wrap(
             spacing: 14,
@@ -344,9 +349,10 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.grey.withOpacity(0.3),
-                        blurRadius: 6,
-                        offset: const Offset(2, 4))
+                      color: Colors.grey.withOpacity(0.3),
+                      blurRadius: 6,
+                      offset: const Offset(2, 4),
+                    ),
                   ],
                 ),
                 child: ElevatedButton(
@@ -354,15 +360,20 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 30, vertical: 14),
+                      horizontal: 30,
+                      vertical: 14,
+                    ),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   onPressed: () {},
                   child: Text(
                     "\$${tarifa.toStringAsFixed(0)} MXN",
                     style: const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w600),
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               );
@@ -378,7 +389,9 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
         Card(
           elevation: 4,
           margin: const EdgeInsets.symmetric(horizontal: 40),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -400,12 +413,17 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
                 const SizedBox(height: 8),
                 Text(
                   "${calificacionPromedio.toStringAsFixed(1)} / 5.0",
-                  style:
-                      const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 6),
-                const Text("Basado en opiniones de clientes",
-                    style: TextStyle(fontSize: 13, color: Colors.grey), textAlign: TextAlign.center),
+                const Text(
+                  "Basado en opiniones de clientes",
+                  style: TextStyle(fontSize: 13, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
               ],
             ),
           ),
@@ -414,36 +432,86 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
         const Text(
           "Disponibilidad",
           style: TextStyle(
-            fontSize: 20, 
+            fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white, 
-            ),
+            color: Colors.white,
+          ),
         ),
         const SizedBox(height: 12),
-        
-        Center(
+
+        /*Center(
           child: ElevatedButton.icon(
-          onPressed: () => setState(() => disponible = !disponible),
+            onPressed: () => setState(() => disponible = !disponible),
             icon: Icon(
-               disponible ? Icons.check_circle : Icons.cancel,
-               color: Colors.white,
+              disponible ? Icons.check_circle : Icons.cancel,
+              color: Colors.white,
             ),
             label: Text(
-            disponible ? "Disponible" : "No disponible",
-            style: const TextStyle(
-            color: Colors.white, 
-            fontWeight: FontWeight.bold,
-            ),
-            ),
-             style: ElevatedButton.styleFrom(
-              backgroundColor: disponible ? Colors.green : Colors.red,
-               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                shape: RoundedRectangleBorder(
-                 borderRadius: BorderRadius.circular(12),
-                 ),
-                ),
+              disponible ? "Disponible" : "No disponible",
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
               ),
             ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: disponible ? Colors.green : Colors.red,
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),*/
+        StreamBuilder<DatabaseEvent>(
+          stream: _usuarioService.streamUsuario, // Escuchamos a Firebase
+          builder: (context, snapshot) {
+            // 1. Estado de carga o error
+            if (!snapshot.hasData || snapshot.hasError) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            // 2. Extraer el valor real de la base de datos
+            // Nota: El valor puede ser null si es la primera vez, así que usamos false por defecto
+            bool isDisponible = false;
+
+            if (snapshot.data!.snapshot.value != null) {
+              final data = snapshot.data!.snapshot.value as Map;
+              isDisponible = data['disponible'] ?? false;
+            }
+
+            // 3. El Botón Reactivo
+            return Center(
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  // Llamamos al servicio para escribir en Firebase
+                  // No necesitamos setState, el StreamBuilder actualizará la UI solo
+                  await _usuarioService.cambiarDisponibilidad(!isDisponible);
+                },
+                icon: Icon(
+                  isDisponible ? Icons.check_circle : Icons.cancel,
+                  color: Colors.white,
+                ),
+                label: Text(
+                  isDisponible ? "Disponible" : "No disponible",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDisponible ? Colors.green : Colors.red,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
 
         const SizedBox(height: 40),
         const Text(
@@ -460,7 +528,7 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
         Center(
           child: Text(
             "© 2025 Limpexia Express. Todos los derechos reservados.",
-            textAlign: TextAlign.center, 
+            textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12, color: Colors.grey[600]),
           ),
         ),
@@ -485,9 +553,17 @@ class OlaAppBarClipper extends CustomClipper<Path> {
     Path path = Path();
     path.lineTo(0, size.height - 40);
     path.quadraticBezierTo(
-        size.width / 4, size.height, size.width / 2, size.height - 30);
+      size.width / 4,
+      size.height,
+      size.width / 2,
+      size.height - 30,
+    );
     path.quadraticBezierTo(
-        3 / 4 * size.width, size.height - 60, size.width, size.height - 20);
+      3 / 4 * size.width,
+      size.height - 60,
+      size.width,
+      size.height - 20,
+    );
     path.lineTo(size.width, 0);
     path.close();
     return path;
@@ -496,7 +572,6 @@ class OlaAppBarClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(OlaAppBarClipper oldClipper) => false;
 }
-
 
 class PerfilProfesionalPage extends StatelessWidget {
   final String nombreSimulado;
@@ -510,7 +585,6 @@ class PerfilProfesionalPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final simulatedEmail = _construirCorreoSimulado(nombreSimulado);
 
     return Scaffold(
@@ -519,7 +593,10 @@ class PerfilProfesionalPage extends StatelessWidget {
         backgroundColor: const Color.fromARGB(255, 6, 78, 125),
         elevation: 0,
         leading: const BackButton(color: Color.fromARGB(255, 255, 255, 255)),
-        title: const Text('Mi perfil', style: TextStyle(color: Color.fromARGB(255, 255, 255, 255))),
+        title: const Text(
+          'Mi perfil',
+          style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
+        ),
         centerTitle: true,
       ),
       body: Center(
@@ -534,17 +611,30 @@ class PerfilProfesionalPage extends StatelessWidget {
                   height: 140,
                   color: Colors.grey[200],
                   child: fotoUrl.isNotEmpty
-                      ? Image.network(fotoUrl, fit: BoxFit.cover, errorBuilder: (context, e, s) {
-                          return Image.asset('assets/icono_usuario.jpg', fit: BoxFit.cover);
-                        })
-                      : Image.asset('assets/icono_usuario.jpg', fit: BoxFit.cover),
+                      ? Image.network(
+                          fotoUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, e, s) {
+                            return Image.asset(
+                              'assets/icono_usuario.jpg',
+                              fit: BoxFit.cover,
+                            );
+                          },
+                        )
+                      : Image.asset(
+                          'assets/icono_usuario.jpg',
+                          fit: BoxFit.cover,
+                        ),
                 ),
               ),
               const SizedBox(height: 18),
               Text(
                 nombreSimulado,
                 style: const TextStyle(
-                    fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 6),
@@ -556,8 +646,10 @@ class PerfilProfesionalPage extends StatelessWidget {
               const SizedBox(height: 22),
               ElevatedButton(
                 onPressed: () async {
-     
-                  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                  final authProvider = Provider.of<AuthProvider>(
+                    context,
+                    listen: false,
+                  );
                   await authProvider.cerrarSesion();
                   if (context.mounted) {
                     Navigator.pushAndRemoveUntil(
@@ -569,15 +661,23 @@ class PerfilProfesionalPage extends StatelessWidget {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 255, 0, 0),
-                  padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 36,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: const [
                     Icon(Icons.logout, color: Colors.white),
                     SizedBox(width: 8),
-                    Text('Cerrar sesión', style: TextStyle(color: Colors.white)),
+                    Text(
+                      'Cerrar sesión',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ],
                 ),
               ),
@@ -600,7 +700,6 @@ class PerfilProfesionalPage extends StatelessWidget {
   }
 }
 
-
 class PagosFacturasPage extends StatelessWidget {
   const PagosFacturasPage({super.key});
 
@@ -612,7 +711,10 @@ class PagosFacturasPage extends StatelessWidget {
         backgroundColor: const Color.fromARGB(255, 6, 78, 125),
         elevation: 0,
         leading: const BackButton(color: Color.fromARGB(255, 255, 255, 255)),
-        title: const Text('Pagos y facturas', style: TextStyle(color: Color.fromARGB(255, 255, 255, 255))),
+        title: const Text(
+          'Pagos y facturas',
+          style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
+        ),
         centerTitle: true,
       ),
       body: Center(
@@ -623,7 +725,11 @@ class PagosFacturasPage extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
-              BoxShadow(color: Colors.grey.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 6))
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 6),
+              ),
             ],
           ),
           child: Column(
@@ -633,7 +739,11 @@ class PagosFacturasPage extends StatelessWidget {
               SizedBox(height: 12),
               Text(
                 'No tienes pagos ni facturas',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 8),
@@ -649,4 +759,3 @@ class PagosFacturasPage extends StatelessWidget {
     );
   }
 }
-

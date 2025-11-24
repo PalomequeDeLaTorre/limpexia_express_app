@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:async';
 import '../../utilidades/colores.dart';
+import '../../servicios/solicitud_service.dart';
 
 class ServicioCasas extends StatefulWidget {
   const ServicioCasas({super.key});
@@ -13,12 +14,15 @@ class ServicioCasas extends StatefulWidget {
 
 class _ServicioCasasState extends State<ServicioCasas> {
   late GoogleMapController _mapController;
+  final SolicitudService _solicitudService = SolicitudService();
   final LatLng _ubicacionCliente = const LatLng(19.4326, -99.1332);
   final Set<Marker> _marcadores = {};
   final Set<String> _seleccionados = {};
+  String? _solicitudIdActual;
+  StreamSubscription? _solicitudSubscription;
 
   bool _buscando = false;
-  int _paginaActual = 0; 
+  int _paginaActual = 0;
   final List<String> _servicios = [
     'Limpieza profunda',
     'Lavar ropa',
@@ -41,6 +45,7 @@ class _ServicioCasasState extends State<ServicioCasas> {
         infoWindow: const InfoWindow(title: 'Tu ubicación'),
       ),
     );
+    _solicitudSubscription?.cancel();
   }
 
   void _toggleServicio(String s) {
@@ -53,7 +58,8 @@ class _ServicioCasasState extends State<ServicioCasas> {
     });
   }
 
-  void _buscarProfesional() {
+
+  void _buscarProfesional() async {
     if (_seleccionados.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Selecciona al menos un servicio')),
@@ -63,17 +69,98 @@ class _ServicioCasasState extends State<ServicioCasas> {
 
     setState(() => _buscando = true);
 
-    Timer(const Duration(seconds: 5), () {
+    try {
+      // 1. Creamos la solicitud y GUARDAMOS EL ID
+      String nuevoId = await _solicitudService.crearSolicitud(
+        tipoServicio: 'Casa', // O 'Auto'
+        opcionesSeleccionadas: _seleccionados.toList(),
+      );
+
+      setState(() {
+        _solicitudIdActual = nuevoId;
+      });
+
+      // 2. Empezamos a ESCUCHAR cambios en esa solicitud
+      _escucharCambiosSolicitud(nuevoId);
+    } catch (e) {
+      setState(() => _buscando = false);
       if (mounted) {
-        setState(() => _buscando = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-                'No hay profesionales de limpieza disponibles en tu área.'),
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
+    }
+  }
+
+  void _escucharCambiosSolicitud(String solicitudId) {
+    // Cancelamos cualquier escucha anterior por seguridad
+    _solicitudSubscription?.cancel();
+
+    _solicitudSubscription = _solicitudService.streamSolicitud(solicitudId).listen((
+      event,
+    ) {
+      // Verificamos si existen datos
+      if (event.snapshot.value == null) return;
+
+      final data = event.snapshot.value as Map;
+      final estado = data['estado'];
+
+      // SI EL ESTADO CAMBIA A "ACEPTADO"
+      if (estado == 'aceptado') {
+        // 1. Dejamos de escuchar
+        _solicitudSubscription?.cancel();
+
+        // 2. Quitamos la pantalla negra
+        if (mounted) {
+          setState(() => _buscando = false);
+
+          // 3. ¡ÉXITO! Aquí navegarás a la pantalla de seguimiento
+          // Por ahora mostramos un diálogo de victoria
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (c) => AlertDialog(
+              title: const Text("¡Profesional Encontrado!"),
+              content: const Text(
+                "Tu profesional ha aceptado y viene en camino.",
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(c);
+                    // AQUI AGREGARÁS: Navigator.push(context, ...) al DashboardCliente
+                  },
+                  child: const Text("Ver detalles"),
+                ),
+              ],
+            ),
+          );
+        }
+      }
     });
+  }
+
+  // Función para cancelar la espera manualmnete
+  void _cancelarBusqueda() async {
+    if (_solicitudIdActual != null) {
+      // 1. Borramos de Firebase
+      await _solicitudService.cancelarSolicitud(_solicitudIdActual!);
+
+      // 2. Dejamos de escuchar
+      _solicitudSubscription?.cancel();
+    }
+
+    // 3. Limpiamos variables y UI
+    setState(() {
+      _buscando = false;
+      _solicitudIdActual = null;
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Búsqueda cancelada')));
+    }
   }
 
   @override
@@ -83,9 +170,7 @@ class _ServicioCasasState extends State<ServicioCasas> {
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 6, 78, 125),
         title: Text(
-          _paginaActual == 0
-              ? 'Limpieza para Casas'
-              : 'Chat con Profesional',
+          _paginaActual == 0 ? 'Limpieza para Casas' : 'Chat con Profesional',
           style: const TextStyle(color: Colors.white),
         ),
         leading: IconButton(
@@ -98,8 +183,7 @@ class _ServicioCasasState extends State<ServicioCasas> {
             } else {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(
-                    builder: (_) => const DashboardCliente()),
+                MaterialPageRoute(builder: (_) => const DashboardCliente()),
               );
             }
           },
@@ -118,7 +202,10 @@ class _ServicioCasasState extends State<ServicioCasas> {
         unselectedItemColor: Colors.grey,
         backgroundColor: Colors.white,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.cleaning_services), label: 'Servicio'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.cleaning_services),
+            label: 'Servicio',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
         ],
       ),
@@ -130,8 +217,7 @@ class _ServicioCasasState extends State<ServicioCasas> {
       children: [
         SafeArea(
           child: SingleChildScrollView(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -141,8 +227,7 @@ class _ServicioCasasState extends State<ServicioCasas> {
                   child: SizedBox(
                     height: 240,
                     child: GoogleMap(
-                      onMapCreated: (controller) =>
-                          _mapController = controller,
+                      onMapCreated: (controller) => _mapController = controller,
                       initialCameraPosition: CameraPosition(
                         target: _ubicacionCliente,
                         zoom: 14,
@@ -171,7 +256,8 @@ class _ServicioCasasState extends State<ServicioCasas> {
                     return Card(
                       elevation: 1,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
                         leading: Icon(
@@ -221,12 +307,11 @@ class _ServicioCasasState extends State<ServicioCasas> {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            const Color.fromARGB(255, 6, 78, 125),
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: const Color.fromARGB(255, 6, 78, 125),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ),
@@ -237,9 +322,10 @@ class _ServicioCasasState extends State<ServicioCasas> {
                 const Text(
                   'Descubre más',
                   style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColores.texto),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColores.texto,
+                  ),
                 ),
                 const SizedBox(height: 12),
 
@@ -256,14 +342,15 @@ class _ServicioCasasState extends State<ServicioCasas> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
                           image: DecorationImage(
-                              image: NetworkImage(img),
-                              fit: BoxFit.cover),
+                            image: NetworkImage(img),
+                            fit: BoxFit.cover,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black12,
                               blurRadius: 6,
                               offset: const Offset(0, 3),
-                            )
+                            ),
                           ],
                         ),
                       );
@@ -275,8 +362,7 @@ class _ServicioCasasState extends State<ServicioCasas> {
                 Center(
                   child: Text(
                     '© 2025 Limpexia. Todos los derechos reservados.',
-                    style: TextStyle(
-                        color: Colors.grey.shade600, fontSize: 12),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -286,17 +372,60 @@ class _ServicioCasasState extends State<ServicioCasas> {
         ),
 
         if (_buscando)
-          Container(
-            color: Colors.black45,
-            child: const Center(
+          Positioned.fill(
+            // Ocupa toda la pantalla
+            child: Container(
+              color: Colors.black.withOpacity(0.8), // Fondo obscuro al 80%
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(color: Colors.white),
-                  SizedBox(height: 12),
-                  Text(
-                    'Buscando profesionales cerca de ti...',
-                    style: TextStyle(color: Colors.white),
+                  // Animación de pulso o carga
+                  const SizedBox(
+                    height: 60,
+                    width: 60,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 4,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+
+                  const Text(
+                    'Solicitud Enviada',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Esperando a que un profesional acepte...',
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                  ),
+
+                  const SizedBox(height: 50),
+
+                  // Botón para cancelar la espera
+                  TextButton.icon(
+                    onPressed: _cancelarBusqueda,
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    label: const Text(
+                      "Cancelar búsqueda",
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.white.withOpacity(0.1),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        side: const BorderSide(color: Colors.white30),
+                      ),
+                    ),
                   ),
                 ],
               ),
