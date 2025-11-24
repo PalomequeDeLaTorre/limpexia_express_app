@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import '../servicios/solicitud_service.dart';
@@ -16,12 +15,11 @@ class _PestanaSolicitudesState extends State<PestanaSolicitudes> {
   final SolicitudService _solicitudService = SolicitudService();
   final UsuarioService _usuarioService = UsuarioService();
 
-  // Lista local de IDs rechazados temporalmente (para no verlos en esta sesión)
   final Set<String> _rechazados = {};
 
   @override
   Widget build(BuildContext context) {
-    // Primero verificamos si el profesional está DISPONIBLE
+    // verfiacar si el profesional está DISPONIBLE
     return StreamBuilder<DatabaseEvent>(
       stream: _usuarioService.streamUsuario,
       builder: (context, snapshotUser) {
@@ -51,7 +49,7 @@ class _PestanaSolicitudesState extends State<PestanaSolicitudes> {
           );
         }
 
-        // SI ESTÁ DISPONIBLE escuchamos las solicitudes
+        // SI ESTÁ DISPONIBLE escucha las solicitudes
         return StreamBuilder<DatabaseEvent>(
           stream: _solicitudService.querySolicitudesPendientes.onValue,
           builder: (context, snapshotSolicitudes) {
@@ -75,10 +73,10 @@ class _PestanaSolicitudesState extends State<PestanaSolicitudes> {
             List<Map<String, dynamic>> solicitudes = [];
 
             data.forEach((key, value) {
-              // Filtramos los que hayamos rechazado localmente
+              // Filtrar los que hayamos rechazado localmente
               if (!_rechazados.contains(key)) {
                 final solicitud = Map<String, dynamic>.from(value);
-                solicitud['key'] = key; // Guardamos el ID
+                solicitud['key'] = key;
                 solicitudes.add(solicitud);
               }
             });
@@ -103,7 +101,6 @@ class _PestanaSolicitudesState extends State<PestanaSolicitudes> {
                   ),
                   child: Column(
                     children: [
-                      // Encabezado de color
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -130,7 +127,6 @@ class _PestanaSolicitudesState extends State<PestanaSolicitudes> {
                               ),
                             ),
                             const Spacer(),
-                            // Timestamp o hora podría ir aquí
                           ],
                         ),
                       ),
@@ -186,24 +182,24 @@ class _PestanaSolicitudesState extends State<PestanaSolicitudes> {
                                 Expanded(
                                   child: ElevatedButton(
                                     onPressed: () async {
-                                      // 1. ACEPTAR EN FIREBASE
+
+                                      final navigator = Navigator.of(context);
+
                                       await _solicitudService.aceptarSolicitud(
                                         sol['key'],
                                         nombreProfesional,
                                       );
 
-                                      if (mounted) {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                SeguimientoProfesional(
-                                                  solicitudId: sol['key'],
-                                                  solicitudData: sol,
-                                                ),
-                                          ),
-                                        );
-                                      }
+                              
+                                      navigator.push(
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              SeguimientoProfesional(
+                                                solicitudId: sol['key'],
+                                                solicitudData: sol,
+                                              ),
+                                        ),
+                                      );
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.green,

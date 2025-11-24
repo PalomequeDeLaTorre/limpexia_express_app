@@ -1,86 +1,53 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../servicios/chat_service.dart';
-import '../providers/auth_provider.dart';
-import '../utilidades/colores.dart';
-import '../utilidades/helpers.dart';
 
-/*
 class PantallaChat extends StatefulWidget {
-  final String reservaId;
-  final String nombreOtraParte;
+  final String solicitudId;
 
-  const PantallaChat({
-    super.key,
-    required this.reservaId,
-    required this.nombreOtraParte,
-  });
+  const PantallaChat({Key? key, required this.solicitudId}) : super(key: key);
 
   @override
   State<PantallaChat> createState() => _PantallaChatState();
 }
 
 class _PantallaChatState extends State<PantallaChat> {
-  final _chatService = ChatService();
-  final _mensajeController = TextEditingController();
-  final _scrollController = ScrollController();
+  final ChatService _chatService = ChatService();
+  final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  
+  // Obtener el ID del usuario actual 
+  final String miUid = FirebaseAuth.instance.currentUser!.uid;
 
-  @override
-  void dispose() {
-    _mensajeController.dispose();
-    _scrollController.dispose();
-    super.dispose();
+  void _enviar() {
+    _chatService.enviarMensaje(widget.solicitudId, _controller.text, miUid);
+    _controller.clear();
+    Future.delayed(const Duration(milliseconds: 100), _hacerScrollAlFinal);
   }
 
-  Future<void> _enviarMensaje() async {
-    if (_mensajeController.text.trim().isEmpty) return;
-
-    final usuario = context.read<AuthProvider>().usuario;
-    if (usuario == null) return;
-
-    await _chatService.enviarMensaje(
-      reservaId: widget.reservaId,
-      texto: _mensajeController.text.trim(),
-      emisorId: usuario.id,
-    );
-
-    _mensajeController.clear();
-    _scrollController.animateTo(
-      0,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+  void _hacerScrollAlFinal() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final usuario = context.watch<AuthProvider>().usuario;
-
     return Scaffold(
-      backgroundColor: AppColores.fondo,
       appBar: AppBar(
-        backgroundColor: AppColores.primario,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColores.blanco),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Row(
+        // Muestra el email actual para verificar identidad
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
-              backgroundColor: AppColores.blanco,
-              child: Text(
-                Helpers.obtenerIniciales(widget.nombreOtraParte),
-                style: const TextStyle(
-                  color: AppColores.primario,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
+            const Text("Chat del Servicio", style: TextStyle(fontSize: 16)),
             Text(
-              widget.nombreOtraParte,
-              style: const TextStyle(color: AppColores.blanco),
+              FirebaseAuth.instance.currentUser?.email ?? "Sin email",
+              style: const TextStyle(fontSize: 10, color: Colors.black),
             ),
           ],
         ),
@@ -88,86 +55,53 @@ class _PantallaChatState extends State<PantallaChat> {
       body: Column(
         children: [
           Expanded(
-            child: StreamBuilder<List<Mensaje>>(
-              stream: _chatService.obtenerMensajes(widget.reservaId),
+            child: StreamBuilder<DatabaseEvent>(
+              stream: _chatService.streamMensajes(widget.solicitudId),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      color: AppColores.primario,
-                    ),
-                  );
+                if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
+                  return const Center(child: Text("Sin mensajes aún."));
                 }
 
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No hay mensajes',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: AppColores.textoClaro,
-                      ),
-                    ),
-                  );
-                }
+                // Convertir la data de Firebase  a una Lista
+                Map data = snapshot.data!.snapshot.value as Map;
+                List mensajes = [];
+                data.forEach((key, value) => mensajes.add(value));
+                
+                // Ordenar por timestamp
+                mensajes.sort((a, b) => (a['timestamp'] ?? 0).compareTo(b['timestamp'] ?? 0));
 
-                final mensajes = snapshot.data!;
+                WidgetsBinding.instance.addPostFrameCallback((_) => _hacerScrollAlFinal());
 
                 return ListView.builder(
                   controller: _scrollController,
-                  reverse: true,
-                  padding: const EdgeInsets.all(16),
                   itemCount: mensajes.length,
+                  padding: const EdgeInsets.all(10),
                   itemBuilder: (context, index) {
-                    final mensaje = mensajes[index];
-                    final esMio = mensaje.emisorId == usuario?.id;
+                    final msg = mensajes[index];
+                    
+                    // oBTENER DATOS
+                    final String remitenteId = msg['remitenteId'].toString();
+                    final String miUid = FirebaseAuth.instance.currentUser!.uid;
+                    final bool esMio = remitenteId == miUid;
 
                     return Align(
-                      alignment: esMio
-                          ? Alignment.centerRight
-                          : Alignment.centerLeft,
+                      alignment: esMio ? Alignment.centerRight : Alignment.centerLeft,
                       child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(12),
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width * 0.7,
-                        ),
+                        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
-                          color: esMio
-                              ? AppColores.primario
-                              : AppColores.blanco,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 5,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          // Color Azul si es mio, Gris si es del otro
+                          color: esMio ? Colors.blue : Colors.grey[300], 
+                          borderRadius: BorderRadius.only(
+                            topLeft: const Radius.circular(12),
+                            topRight: const Radius.circular(12),
+                            bottomLeft: esMio ? const Radius.circular(12) : const Radius.circular(0),
+                            bottomRight: esMio ? const Radius.circular(0) : const Radius.circular(12),
+                          ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              mensaje.texto,
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: esMio
-                                    ? AppColores.blanco
-                                    : AppColores.texto,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              Helpers.formatearFecha(mensaje.fecha),
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: esMio
-                                    ? AppColores.blanco.withOpacity(0.7)
-                                    : AppColores.textoClaro,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          msg['texto'],
+                          style: TextStyle(color: esMio ? Colors.white : Colors.black87), 
                         ),
                       ),
                     );
@@ -176,55 +110,29 @@ class _PantallaChatState extends State<PantallaChat> {
               },
             ),
           ),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColores.blanco,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
+          // Input
+          Padding(
+            padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
-                    controller: _mensajeController,
+                    controller: _controller,
                     decoration: InputDecoration(
-                      hintText: 'Escribe un mensaje...',
-                      filled: true,
-                      fillColor: AppColores.fondo,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
-                      ),
+                      hintText: "Escribe un mensaje...",
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
                     ),
-                    maxLines: null,
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) => _enviarMensaje(),
                   ),
                 ),
                 const SizedBox(width: 8),
-                Container(
-                  decoration: const BoxDecoration(
-                    color: AppColores.primario,
-                    shape: BoxShape.circle,
-                  ),
+                CircleAvatar(
+                  backgroundColor: Colors.blue,
                   child: IconButton(
-                    icon: const Icon(
-                      Icons.send,
-                      color: AppColores.blanco,
-                    ),
-                    onPressed: _enviarMensaje,
+                    icon: const Icon(Icons.send, color: Colors.white),
+                    onPressed: _enviar,
                   ),
-                ),
+                )
               ],
             ),
           ),
@@ -233,5 +141,3 @@ class _PantallaChatState extends State<PantallaChat> {
     );
   }
 }
-
-*/

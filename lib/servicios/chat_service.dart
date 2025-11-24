@@ -1,67 +1,31 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-class Mensaje {
-  final String id;
-  final String texto;
-  final String emisorId;
-  final DateTime fecha;
-
-  Mensaje({
-    required this.id,
-    required this.texto,
-    required this.emisorId,
-    required this.fecha,
-  });
-
-  factory Mensaje.fromJson(Map<String, dynamic> json) {
-    return Mensaje(
-      id: json['id'] ?? '',
-      texto: json['texto'] ?? '',
-      emisorId: json['emisorId'] ?? '',
-      fecha: DateTime.parse(json['fecha']),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'texto': texto,
-      'emisorId': emisorId,
-      'fecha': fecha.toIso8601String(),
-    };
-  }
-}
+import 'package:firebase_database/firebase_database.dart';
 
 class ChatService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
 
-  Stream<List<Mensaje>> obtenerMensajes(String reservaId) {
-    return _firestore
-        .collection('chats')
-        .doc(reservaId)
-        .collection('mensajes')
-        .orderBy('fecha', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Mensaje.fromJson({...doc.data(), 'id': doc.id}))
-            .toList());
+  // Enviar mensaje
+  Future<void> enviarMensaje(String solicitudId, String texto, String miUid) async {
+    if (texto.trim().isEmpty) return;
+
+    try {
+      // Crear un nuevo nodo con ID automático dentro de la solicitud
+      await _dbRef.child('mensajes').child(solicitudId).push().set({
+        'remitenteId': miUid,
+        'texto': texto.trim(),
+        'timestamp': ServerValue.timestamp, // Marca de tiempo del servidor
+      });
+    } catch (e) {
+      print('Error al enviar mensaje: $e');
+    }
   }
 
-  Future<void> enviarMensaje({
-    required String reservaId,
-    required String texto,
-    required String emisorId,
-  }) async {
-    final mensaje = Mensaje(
-      id: '',
-      texto: texto,
-      emisorId: emisorId,
-      fecha: DateTime.now(),
-    );
-
-    await _firestore
-        .collection('chats')
-        .doc(reservaId)
-        .collection('mensajes')
-        .add(mensaje.toJson());
+  // Escuchar mensajes
+  Stream<DatabaseEvent> streamMensajes(String solicitudId) {
+    // Ordenar por timestamp para verlos cronológicamente
+    return _dbRef
+        .child('mensajes')
+        .child(solicitudId)
+        .orderByChild('timestamp')
+        .onValue;
   }
 }

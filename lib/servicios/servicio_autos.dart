@@ -1,3 +1,5 @@
+import 'package:limpexia_express_app/pantallas/seguimiento_cliente.dart';
+
 import '../pantallas/dashboard_cliente.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -21,7 +23,7 @@ class _ServicioAutosState extends State<ServicioAutos> {
   bool _buscando = false;
   int _paginaActual = 0; 
 
-  String? _solicitudIdActual; // Para guardar el ID (ej: "-Nxy...")
+  String? _solicitudIdActual;
   StreamSubscription? _solicitudSubscription;
 
   final List<String> _servicios = [
@@ -70,7 +72,7 @@ class _ServicioAutosState extends State<ServicioAutos> {
     setState(() => _buscando = true);
 
     try {
-      // 1. Creamos la solicitud y GUARDAMOS EL ID
+      // Crea la solicitud y guarda el ID
       String nuevoId = await _solicitudService.crearSolicitud(
         tipoServicio: 'Auto',
         opcionesSeleccionadas: _seleccionados.toList(),
@@ -80,7 +82,6 @@ class _ServicioAutosState extends State<ServicioAutos> {
         _solicitudIdActual = nuevoId;
       });
 
-      // 2. Empezamos a ESCUCHAR cambios en esa solicitud
       _escucharCambiosSolicitud(nuevoId);
 
     } catch (e) {
@@ -94,41 +95,31 @@ class _ServicioAutosState extends State<ServicioAutos> {
   }
 
   void _escucharCambiosSolicitud(String solicitudId) {
-    // Cancelamos cualquier escucha anterior por seguridad
     _solicitudSubscription?.cancel();
 
-    _solicitudSubscription = _solicitudService.streamSolicitud(solicitudId).listen((event) {
-      // Verificamos si existen datos
+    _solicitudSubscription = _solicitudService.streamSolicitud(solicitudId).listen((
+      event,
+    ) {
+      // Verifica si existen datos
       if (event.snapshot.value == null) return;
 
       final data = event.snapshot.value as Map;
       final estado = data['estado'];
 
-      // SI EL ESTADO CAMBIA A "ACEPTADO"
       if (estado == 'aceptado') {
-        // 1. Dejamos de escuchar
+        // deja de escuchar para no duplicar eventos
         _solicitudSubscription?.cancel();
-        
-        // 2. Quitamos la pantalla negra
+
+        // Quita la pantalla negra overlay
         if (mounted) {
           setState(() => _buscando = false);
-          
-          // 3. ¡ÉXITO! Aquí navegarás a la pantalla de seguimiento
-          // Por ahora mostramos un diálogo de victoria
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (c) => AlertDialog(
-              title: const Text("¡Profesional Encontrado!"),
-              content: const Text("Tu profesional ha aceptado y viene en camino."),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                      Navigator.pop(c);
-                  },
-                  child: const Text("Ver detalles"),
-                )
-              ],
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SeguimientoCliente(
+                solicitudId: solicitudId, 
+              ),
             ),
           );
         }
@@ -136,25 +127,23 @@ class _ServicioAutosState extends State<ServicioAutos> {
     });
   }
 
+  // Función para cancelar la espera manualmnete
   void _cancelarBusqueda() async {
     if (_solicitudIdActual != null) {
-      // 1. Borramos de Firebase
       await _solicitudService.cancelarSolicitud(_solicitudIdActual!);
-      
-      // 2. Dejamos de escuchar
+
       _solicitudSubscription?.cancel();
     }
 
-    // 3. Limpiamos variables y UI
     setState(() {
       _buscando = false;
       _solicitudIdActual = null;
     });
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Búsqueda cancelada')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Búsqueda cancelada')));
     }
   }
 
@@ -186,12 +175,19 @@ class _ServicioAutosState extends State<ServicioAutos> {
       body: _paginaActual == 0 ? _paginaServicio() : _paginaChat(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _paginaActual,
-        onTap: (index) => setState(() => _paginaActual = index),
+        onTap: (index) {
+          setState(() {
+            _paginaActual = index;
+          });
+        },
         selectedItemColor: const Color.fromARGB(255, 6, 78, 125),
         unselectedItemColor: Colors.grey,
         backgroundColor: Colors.white,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.local_car_wash), label: 'Servicio'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.cleaning_services),
+            label: 'Servicio',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
         ],
       ),
@@ -346,13 +342,11 @@ class _ServicioAutosState extends State<ServicioAutos> {
 
         if (_buscando)
           Positioned.fill(
-            // Ocupa toda la pantalla
             child: Container(
-              color: Colors.black.withOpacity(0.8), // Fondo obscuro al 80%
+              color: Colors.black.withOpacity(0.8),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Animación de pulso o carga
                   const SizedBox(
                     height: 60,
                     width: 60,

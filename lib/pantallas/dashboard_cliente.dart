@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -5,6 +6,8 @@ import 'package:limpexia_express_app/servicios/servicio_autos.dart';
 import 'package:limpexia_express_app/servicios/servicio_casas.dart';
 import '../utilidades/colores.dart';
 import 'login.dart';
+import 'seguimiento_cliente.dart';
+import 'pantalla_calificacion.dart';
 
 class DashboardCliente extends StatefulWidget {
   const DashboardCliente({super.key});
@@ -18,6 +21,7 @@ class _DashboardClienteState extends State<DashboardCliente> {
   final _db = FirebaseDatabase.instance;
   Map<dynamic, dynamic>? userData;
   bool cargando = true;
+  StreamSubscription? _serviciosSubscription;
 
   List<Map<String, dynamic>> serviciosSolicitados = [];
   bool cargandoServicios = true;
@@ -36,10 +40,12 @@ class _DashboardClienteState extends State<DashboardCliente> {
 
   @override
   void initState() {
+    _serviciosSubscription?.cancel();
     super.initState();
     _cargarDatosUsuario();
     _cargarServiciosUsuario();
     _cargarNotificaciones();
+    
   }
 
   Future<void> _cargarDatosUsuario() async {
@@ -60,44 +66,53 @@ class _DashboardClienteState extends State<DashboardCliente> {
     }
   }
 
-  Future<void> _cargarServiciosUsuario() async {
-    setState(() {
-      cargandoServicios = true;
-      serviciosSolicitados = [];
-    });
-    try {
-      final user = _auth.currentUser;
-      if (user == null) return;
+  void _cargarServiciosUsuario() {
+    
+    final user = _auth.currentUser;
+    if (user == null) return;
 
-      final snapshot = await _db.ref('solicitudes/${user.uid}').get();
-      if (snapshot.exists) {
-        final value = snapshot.value;
-        if (value is Map) {
-          value.forEach((key, val) {
-            if (val is Map) {
-              serviciosSolicitados.add(Map<String, dynamic>.from(val));
-            } else {
-              serviciosSolicitados.add({'id': key, 'data': val.toString()});
-            }
-          });
-        } else if (value is List) {
-          for (var item in value) {
-            if (item is Map) {
-              serviciosSolicitados.add(Map<String, dynamic>.from(item));
-            } else {
-              serviciosSolicitados.add({'data': item.toString()});
-            }
-          };
+    // Cancelar cualquier escucha anterior para no duplicar
+    _serviciosSubscription?.cancel();
 
-        }
+    // Iniciar la escucha en tiempo real
+    _serviciosSubscription = _db
+        .ref('solicitudes')
+        .orderByChild('clienteId')
+        .equalTo(user.uid)
+        .onValue
+        .listen((event) {
+      
+      // Esta parte se ejecuta cada que algo cambia en la base de datos
+      final List<Map<String, dynamic>> listaTemporal = [];
+      
+      if (event.snapshot.exists && event.snapshot.value != null) {
+        final data = Map<dynamic, dynamic>.from(event.snapshot.value as Map);
+        
+        data.forEach((key, value) {
+          final servicio = Map<String, dynamic>.from(value);
+          servicio['id'] = key;
+          listaTemporal.add(servicio);
+        });
+
+        // Ordenar
+        listaTemporal.sort((a, b) {
+          var timeA = a['timestamp'] ?? 0;
+          var timeB = b['timestamp'] ?? 0;
+          return timeB.compareTo(timeA);
+        });
       }
-    } catch (e) {
-      print('Error al cargar servicios: $e');
-    } finally {
-      setState(() {
-        cargandoServicios = false;
-      });
-    }
+
+      // Actualizamos la pantalla
+      if (mounted) {
+        setState(() {
+          serviciosSolicitados = listaTemporal;
+          cargandoServicios = false;
+        });
+      }
+    }, onError: (error) {
+      print("Error escuchando servicios: $error");
+      if (mounted) setState(() => cargandoServicios = false);
+    });
   }
 
   Future<void> _cargarNotificaciones() async {
@@ -283,25 +298,28 @@ class _DashboardClienteState extends State<DashboardCliente> {
       ),
       body: _paginaActual == 0
           ? _paginaHome(nombre, fotoUrl)
-          : _paginaActual == 1
-              ? _paginaMisServicios()
-              : _paginaChat(),
+          : _paginaMisServicios(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _paginaActual,
         onTap: (index) {
           setState(() {
             _paginaActual = index;
-            if (index == 1) _cargarServiciosUsuario();
+            // Recarga si vas a la pestaña 1
+            if (index == 1) _cargarServiciosUsuario(); 
           });
         },
         selectedItemColor: const Color.fromARGB(255, 6, 78, 125),
         unselectedItemColor: Colors.grey,
         backgroundColor: Colors.white,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.list_alt), label: 'Mis servicios'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
+            icon: Icon(Icons.home), 
+            label: 'Home'
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.list_alt), 
+            label: 'Mis servicios'
+          ),
         ],
       ),
     );
@@ -427,13 +445,26 @@ class _DashboardClienteState extends State<DashboardCliente> {
   }
 
   Widget _paginaMisServicios() {
+    final botonSolicitar = ElevatedButton.icon(
+      onPressed: () => _mostrarMenuTiposServicio(context),
+      icon: const Icon(Icons.add),
+      label: const Text('Solicitar nuevo servicio'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color.fromARGB(255, 6, 78, 125),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      ),
+    );
+
+    // ESTADO DE CARGA
     if (cargandoServicios) {
       return const Center(
-        child: CircularProgressIndicator(
-            color: Color.fromARGB(255, 6, 78, 125)),
+        child: CircularProgressIndicator(color: Color.fromARGB(255, 6, 78, 125)),
       );
     }
 
+    // 2. ESTADO VACÍO
     if (serviciosSolicitados.isEmpty) {
       return SafeArea(
         child: Center(
@@ -449,67 +480,8 @@ class _DashboardClienteState extends State<DashboardCliente> {
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                 ),
-                const SizedBox(height: 12),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(20))),
-                      builder: (context) => Container(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text('Selecciona un tipo de servicio',
-                                style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 12),
-                            ListTile(
-                              leading: const Icon(Icons.home_rounded,
-                                  color: Color.fromARGB(255, 6, 78, 125)),
-                              title: const Text('Casas'),
-                              onTap: () {
-                                Navigator.pop(context);
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) =>
-                                            const ServicioCasas()));
-                              },
-                            ),
-                            ListTile(
-                              leading: const Icon(
-                                  Icons.directions_car_rounded,
-                                  color:
-                                      Color.fromARGB(255, 6, 78, 125)),
-                              title: const Text('Autos'),
-                              onTap: () {
-                                Navigator.pop(context);
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) =>
-                                            const ServicioAutos()));
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Solicitar un servicio'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        const Color.fromARGB(255, 6, 78, 125),
-                         foregroundColor: Colors.white, 
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                  ),
-                ),
+                const SizedBox(height: 20),
+                botonSolicitar, 
               ],
             ),
           ),
@@ -517,78 +489,244 @@ class _DashboardClienteState extends State<DashboardCliente> {
       );
     }
 
+    // ESTADO CON HISTORIAL
     return SafeArea(
-      child: RefreshIndicator(
-        onRefresh: _cargarServiciosUsuario,
-        child: ListView.separated(
-          padding: const EdgeInsets.all(12),
-          itemCount: serviciosSolicitados.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (context, index) {
-            final servicio = serviciosSolicitados[index];
-            final tipo = servicio['tipo'] ??
-                servicio['categoria'] ??
-                servicio['servicio'] ??
-                'Servicio';
-            final fecha = servicio['fecha'] ??
-                servicio['fecha_solicitud'] ??
-                servicio['created_at'] ??
-                '';
-            final estado = servicio['estado'] ?? 'Pendiente';
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16.0),
+            color: Colors.grey[50],
+            child: botonSolicitar,
+          ),
 
-            return Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: const [
-                  BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 4,
-                      offset: Offset(0, 2))
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(tipo.toString(),
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 6),
-                  if (fecha.toString().isNotEmpty)
-                    Text('Fecha: ${fecha.toString()}'),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Estado: $estado'),
-                      TextButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content:
-                                      Text('Ver detalles del servicio'))); 
-                        },
-                        child: const Text('Ver'),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await Future.delayed(const Duration(seconds: 1));
+              },
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                itemCount: serviciosSolicitados.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final servicio = serviciosSolicitados[index];
+
+                  //Extracción de datos
+                  final tipo = servicio['tipo'] ?? servicio['categoria'] ?? 'Servicio';
+                  final rawDate = servicio['fecha'] ?? servicio['created_at'] ?? servicio['timestamp'];
+                  final String idSolicitud = servicio['id'];
+                  final String? idProfesional = servicio['profesionalId'];
+                  
+                  // Estado base de la BD
+                  String estadoBD = (servicio['estado'] ?? 'Pendiente').toString().toLowerCase();
+                  
+                  // Verifica si ya tiene calificación
+                  bool yaCalifico = servicio['calificacion'] != null || estadoBD == 'cerrado';
+
+                  String textoEstado;
+                  Color colorEstado;
+                  bool requiereAccion = false;
+
+                  if (estadoBD == 'finalizado') {
+                    if (yaCalifico) {
+                      textoEstado = "FINALIZADO";
+                      colorEstado = Colors.green;
+                    } else {
+                      textoEstado = "POR CALIFICAR";
+                      colorEstado = Colors.orange;
+                      requiereAccion = true;
+                    }
+                  } else if (estadoBD == 'cerrado') {
+                    textoEstado = "FINALIZADO";
+                    colorEstado = Colors.green;
+                  } else if (estadoBD == 'cancelado') {
+                    textoEstado = "CANCELADO";
+                    colorEstado = Colors.red;
+                  } else {
+                    textoEstado = estadoBD.toUpperCase();
+                    colorEstado = Colors.blue;
+                    requiereAccion = true; // Permite ir al seguimiento
+                  }
+
+                  // Formateo de fecha
+                  String fechaTexto = '';
+                  if (rawDate is int) {
+                    final dt = DateTime.fromMillisecondsSinceEpoch(rawDate);
+                    fechaTexto = "${dt.day}/${dt.month} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}";
+                  } else {
+                    fechaTexto = rawDate.toString();
+                  }
+
+                  return GestureDetector(
+                    onTap: () {
+                      // Lógica de navegación al tocar la tarjeta entera
+                      if (textoEstado == "POR CALIFICAR" && idProfesional != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PantallaCalificacion(
+                              solicitudId: idSolicitud,
+                              profesionalId: idProfesional,
+                            ),
+                          ),
+                        );
+                      } else if (textoEstado == "FINALIZADO") {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Servicio completado exitosamente."))
+                        );
+                      } else if (estadoBD != 'cancelado') {
+                        // Ir a seguimiento
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => SeguimientoCliente(solicitudId: idSolicitud),
+                          ),
+                        );
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: requiereAccion 
+                            ? Border.all(color: colorEstado.withOpacity(0.3), width: 1)
+                            : null,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          )
+                        ],
                       ),
-                    ],
-                  ),
-                ],
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    tipo == 'Auto' ? Icons.directions_car : Icons.home,
+                                    color: const Color.fromARGB(255, 6, 78, 125),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    tipo.toString(),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: colorEstado.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      textoEstado,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: colorEstado,
+                                      ),
+                                    ),
+                                    if (requiereAccion) ...[
+                                      const SizedBox(width: 4),
+                                      Icon(Icons.arrow_forward_ios, size: 10, color: colorEstado)
+                                    ]
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          if (fechaTexto.isNotEmpty)
+                            Text(
+                              'Fecha: $fechaTexto',
+                              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                            ),
+                          
+                          if (textoEstado == "POR CALIFICAR")
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                "Tap para calificar el servicio ⭐",
+                                style: TextStyle(color: Colors.orange[800], fontSize: 12, fontStyle: FontStyle.italic),
+                              ),
+                            )
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
-            );
-          },
+            ),
+          )
+          
+        ],
+      ),
+    );
+  }
+
+  // helper para dar color según estado
+    Color _getColorEstado(String estado) {
+      switch (estado.toLowerCase()) {
+        case 'finalizado': return Colors.green;
+        case 'cancelado': return Colors.red;
+        case 'pendiente': return Colors.orange;
+        case 'aceptado': return Colors.blue;
+        default: return Colors.grey;
+      }
+  }
+
+  // Función para mostrar el menú de tipos de servicio
+  void _mostrarMenuTiposServicio(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Selecciona un tipo de servicio',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            ListTile(
+              leading: const Icon(Icons.home_rounded, color: Color.fromARGB(255, 6, 78, 125)),
+              title: const Text('Casas'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ServicioCasas()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.directions_car_rounded, color: Color.fromARGB(255, 6, 78, 125)),
+              title: const Text('Autos'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ServicioAutos()));
+              },
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _paginaChat() {
-    return const Center(
-      child: Text(
-        '💬 Buzón de mensajes vacío',
-          style: TextStyle(fontSize: 18, color: Colors.black54),textAlign: TextAlign.center,),
-    );
-  }
 
   Widget _categoriaBoton(IconData icono, String texto, Color color) {
     return GestureDetector(

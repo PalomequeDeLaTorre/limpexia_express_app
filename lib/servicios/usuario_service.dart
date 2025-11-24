@@ -9,17 +9,16 @@ class UsuarioService {
   Future<void> cambiarDisponibilidad(bool estaDisponible) async {
     User? user = _auth.currentUser;
     if (user != null) {
-      // Actualizamos solo el campo 'disponible' dentro del nodo del usuario
+      // Actualiza solo el campo 'disponible' dentro del nodo del usuario
       await _dbRef.child('usuarios/${user.uid}').update({
         'disponible': estaDisponible,
       });
     }
   }
 
-  // Escuchar el estado del usuario en tiempo real
+  // Escucha el estado del usuario en tiempo real
   Stream<DatabaseEvent> get streamUsuario {
     String? uid = _auth.currentUser?.uid;
-    // Escuchamos el nodo específico del usuario
     return _dbRef.child('usuarios/$uid').onValue;
   }
 }

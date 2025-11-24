@@ -1,3 +1,5 @@
+import 'package:limpexia_express_app/pantallas/seguimiento_cliente.dart';
+
 import '../pantallas/dashboard_cliente.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -70,9 +72,8 @@ class _ServicioCasasState extends State<ServicioCasas> {
     setState(() => _buscando = true);
 
     try {
-      // 1. Creamos la solicitud y GUARDAMOS EL ID
       String nuevoId = await _solicitudService.crearSolicitud(
-        tipoServicio: 'Casa', // O 'Auto'
+        tipoServicio: 'Casa',
         opcionesSeleccionadas: _seleccionados.toList(),
       );
 
@@ -80,7 +81,6 @@ class _ServicioCasasState extends State<ServicioCasas> {
         _solicitudIdActual = nuevoId;
       });
 
-      // 2. Empezamos a ESCUCHAR cambios en esa solicitud
       _escucharCambiosSolicitud(nuevoId);
     } catch (e) {
       setState(() => _buscando = false);
@@ -93,46 +93,28 @@ class _ServicioCasasState extends State<ServicioCasas> {
   }
 
   void _escucharCambiosSolicitud(String solicitudId) {
-    // Cancelamos cualquier escucha anterior por seguridad
     _solicitudSubscription?.cancel();
 
     _solicitudSubscription = _solicitudService.streamSolicitud(solicitudId).listen((
       event,
     ) {
-      // Verificamos si existen datos
       if (event.snapshot.value == null) return;
 
       final data = event.snapshot.value as Map;
       final estado = data['estado'];
 
-      // SI EL ESTADO CAMBIA A "ACEPTADO"
       if (estado == 'aceptado') {
-        // 1. Dejamos de escuchar
         _solicitudSubscription?.cancel();
 
-        // 2. Quitamos la pantalla negra
         if (mounted) {
           setState(() => _buscando = false);
 
-          // 3. ¡ÉXITO! Aquí navegarás a la pantalla de seguimiento
-          // Por ahora mostramos un diálogo de victoria
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (c) => AlertDialog(
-              title: const Text("¡Profesional Encontrado!"),
-              content: const Text(
-                "Tu profesional ha aceptado y viene en camino.",
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SeguimientoCliente(
+                solicitudId: solicitudId, 
               ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(c);
-                    // AQUI AGREGARÁS: Navigator.push(context, ...) al DashboardCliente
-                  },
-                  child: const Text("Ver detalles"),
-                ),
-              ],
             ),
           );
         }
@@ -143,14 +125,11 @@ class _ServicioCasasState extends State<ServicioCasas> {
   // Función para cancelar la espera manualmnete
   void _cancelarBusqueda() async {
     if (_solicitudIdActual != null) {
-      // 1. Borramos de Firebase
       await _solicitudService.cancelarSolicitud(_solicitudIdActual!);
 
-      // 2. Dejamos de escuchar
       _solicitudSubscription?.cancel();
     }
 
-    // 3. Limpiamos variables y UI
     setState(() {
       _buscando = false;
       _solicitudIdActual = null;
@@ -373,13 +352,11 @@ class _ServicioCasasState extends State<ServicioCasas> {
 
         if (_buscando)
           Positioned.fill(
-            // Ocupa toda la pantalla
             child: Container(
-              color: Colors.black.withOpacity(0.8), // Fondo obscuro al 80%
+              color: Colors.black.withOpacity(0.8),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Animación de pulso o carga
                   const SizedBox(
                     height: 60,
                     width: 60,

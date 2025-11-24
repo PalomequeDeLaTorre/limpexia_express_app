@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:limpexia_express_app/pantallas/pantalla_chat.dart';
 import '../servicios/solicitud_service.dart';
 
 class SeguimientoProfesional extends StatefulWidget {
@@ -18,7 +19,6 @@ class SeguimientoProfesional extends StatefulWidget {
 class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
   final SolicitudService _solicitudService = SolicitudService();
   
-  // Definimos los pasos ordenados
   final List<String> _pasosCodigo = ['por_salir', 'en_camino', 'por_llegar', 'afuera'];
   final List<String> _pasosTexto = [
     'Estoy por salir',
@@ -32,7 +32,7 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
   @override
   void initState() {
     super.initState();
-    // Iniciamos escuchando el estado real por si se cierra la app y se vuelve a abrir
+    // Inicia escuchando el estado real por si se cierra la app y se vuelve a abrir
     _estadoActual = widget.solicitudData['progreso'] ?? 'por_salir';
   }
 
@@ -40,7 +40,7 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
   void _avanzarPaso() async {
     int indexActual = _pasosCodigo.indexOf(_estadoActual);
     
-    // Si todavía quedan pasos...
+    // Si todavía quedan pasos
     if (indexActual < _pasosCodigo.length - 1) {
       String siguientePaso = _pasosCodigo[indexActual + 1];
       
@@ -50,11 +50,10 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
         _estadoActual = siguientePaso;
       });
     } 
-    // Si ya estamos en el último paso (Afuera), el siguiente botón será "Finalizar"
   }
 
   void _finalizarTrabajo() async {
-    // Aquí podrías mostrar un diálogo para confirmar el monto o cobrar
+    // Para confirmar y finalizar el servicio con posibilidad de obtener un monto para funtura funcionalidad
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -65,7 +64,7 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
           ElevatedButton(
             onPressed: () async {
               // Finalizamos en Firebase
-              await _solicitudService.finalizarServicio(widget.solicitudId, 0.0); // 0.0 por ahora
+              await _solicitudService.finalizarServicio(widget.solicitudId, 0.0);
               if (mounted) {
                 Navigator.pop(context); // Cierra diálogo
                 Navigator.pop(context); // Regresa al Dashboard
@@ -93,7 +92,6 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
         backgroundColor: const Color(0xFF064E7D),
         foregroundColor: Colors.white,
         leading: IconButton(
-          // Evitamos que pueda volver atrás por error sin finalizar
           icon: const Icon(Icons.keyboard_arrow_down),
           onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Debes finalizar el servicio para salir.")),
@@ -102,7 +100,7 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
       ),
       body: Column(
         children: [
-          // 1. INFO DEL CLIENTE
+          // INFO DEL CLIENTE
           Container(
             padding: const EdgeInsets.all(20),
             color: Colors.white,
@@ -125,10 +123,15 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
                   ],
                 ),
                 const Spacer(),
-                // Botón de Chat (Lo conectaremos en el siguiente paso)
+                // Botón de Chat
                 IconButton(
                   onPressed: () {
-                    // Navegar al chat
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PantallaChat(solicitudId: widget.solicitudId),
+                      ),
+                    );
                   },
                   icon: const Icon(Icons.chat_bubble, color: Color(0xFF064E7D), size: 30),
                 )
@@ -137,7 +140,7 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
           ),
           const Divider(height: 1),
 
-          // 2. LÍNEA DE TIEMPO (LOS 4 PASOS)
+          // LÍNEA DE TIEMPO 
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(24),
@@ -151,7 +154,6 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
                   children: [
                     Column(
                       children: [
-                        // Bolita del paso
                         Container(
                           width: 30,
                           height: 30,
@@ -166,7 +168,6 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
                             ? const Icon(Icons.check, size: 18, color: Colors.white) 
                             : null,
                         ),
-                        // Línea vertical conectora
                         if (index < _pasosTexto.length - 1)
                           Container(
                             width: 3,
@@ -192,7 +193,7 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
             ),
           ),
 
-          // 3. BOTÓN DE ACCIÓN PRINCIPAL
+          // BOTÓN DE ACCIÓN PRINCIPAL
           Container(
             padding: const EdgeInsets.all(20),
             width: double.infinity,
@@ -216,7 +217,7 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
                 : ElevatedButton(
                     onPressed: _finalizarTrabajo,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green, // Verde para finalizar
+                      backgroundColor: Colors.green,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),

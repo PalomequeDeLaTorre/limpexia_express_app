@@ -7,6 +7,10 @@ import 'login.dart';
 import '../servicios/usuario_service.dart';
 import 'pestana_solicitudes.dart';
 
+
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider; 
+import '../servicios/solicitud_service.dart';
+
 class DashboardProfesional extends StatefulWidget {
   const DashboardProfesional({super.key});
 
@@ -23,11 +27,37 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
 
   int _paginaActual = 0;
 
+  double _calificacion = 5.0;
+  int _totalResenas = 0;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _configurarServicios();
+    });
+    _escucharCalificacion();
+  }
+
+  void _escucharCalificacion() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    FirebaseDatabase.instance
+        .ref('usuarios/$uid')
+        .onValue
+        .listen((event) {
+      if (event.snapshot.exists) {
+        final data = event.snapshot.value as Map?;
+        if (data != null && mounted) {
+          setState(() {
+            var calif = data['calificacion_promedio'];
+            _calificacion = (calif is int) ? calif.toDouble() : (calif ?? 5.0);
+            
+            _totalResenas = data['cantidad_resenas'] ?? 0;
+          });
+        }
+      }
     });
   }
 
@@ -179,7 +209,7 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
           ? _paginaHome(nombreUsuario, profesion, fotoUsuario)
           : _paginaActual == 1
           ? const PestanaSolicitudes()
-          : _paginaChat(),
+          : _paginaHistorial(),
 
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _paginaActual,
@@ -196,7 +226,7 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
             icon: Icon(Icons.local_laundry_service),
             label: 'Limpiezas',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Historial'),
         ],
       ),
     );
@@ -388,7 +418,7 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
         const SizedBox(height: 16),
         Card(
           elevation: 4,
-          margin: const EdgeInsets.symmetric(horizontal: 40),
+          margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -398,30 +428,37 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
               children: [
                 const Icon(Icons.star_rounded, color: Colors.amber, size: 48),
                 const SizedBox(height: 8),
+                
+                // Estrellitas dinámicas
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(5, (i) {
+                    // Usamos .round() para decidir si pintar o no
                     return Icon(
-                      i < calificacionPromedio.round()
-                          ? Icons.star
+                      i < _calificacion.round() 
+                          ? Icons.star 
                           : Icons.star_border,
                       color: Colors.amber,
                       size: 26,
                     );
                   }),
                 ),
+                
                 const SizedBox(height: 8),
                 Text(
-                  "${calificacionPromedio.toStringAsFixed(1)} / 5.0",
+                  "${_calificacion.toStringAsFixed(1)} / 5.0",
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
                 ),
+                
                 const SizedBox(height: 6),
-                const Text(
-                  "Basado en opiniones de clientes",
-                  style: TextStyle(fontSize: 13, color: Colors.grey),
+                Text(
+                  _totalResenas == 0 
+                      ? "Sin opiniones todavía"
+                      : "Basado en $_totalResenas ${_totalResenas == 1 ? 'opinión' : 'opiniones'}",
+                  style: const TextStyle(fontSize: 13, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -439,39 +476,14 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
         ),
         const SizedBox(height: 12),
 
-        /*Center(
-          child: ElevatedButton.icon(
-            onPressed: () => setState(() => disponible = !disponible),
-            icon: Icon(
-              disponible ? Icons.check_circle : Icons.cancel,
-              color: Colors.white,
-            ),
-            label: Text(
-              disponible ? "Disponible" : "No disponible",
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: disponible ? Colors.green : Colors.red,
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ),*/
         StreamBuilder<DatabaseEvent>(
-          stream: _usuarioService.streamUsuario, // Escuchamos a Firebase
+          stream: _usuarioService.streamUsuario, 
           builder: (context, snapshot) {
-            // 1. Estado de carga o error
             if (!snapshot.hasData || snapshot.hasError) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            // 2. Extraer el valor real de la base de datos
-            // Nota: El valor puede ser null si es la primera vez, así que usamos false por defecto
+            // Extraer el valor real de la base de datos
             bool isDisponible = false;
 
             if (snapshot.data!.snapshot.value != null) {
@@ -479,12 +491,11 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
               isDisponible = data['disponible'] ?? false;
             }
 
-            // 3. El Botón Reactivo
+            // Botón Reactivo
             return Center(
               child: ElevatedButton.icon(
                 onPressed: () async {
-                  // Llamamos al servicio para escribir en Firebase
-                  // No necesitamos setState, el StreamBuilder actualizará la UI solo
+                  // Llama al servicio para escribir en Firebase
                   await _usuarioService.cambiarDisponibilidad(!isDisponible);
                 },
                 icon: Icon(
@@ -536,14 +547,141 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
     );
   }
 
-  Widget _paginaChat() {
-    return const Center(
-      child: Text(
-        "💬 Buzón de mensajes vacío",
-        style: TextStyle(fontSize: 18, color: Colors.black54),
-        textAlign: TextAlign.center,
-      ),
+  // Variable para instanciar el servicio
+  final SolicitudService _solicitudService = SolicitudService();
+
+  Widget _paginaHistorial() {
+    final String miUid = FirebaseAuth.instance.currentUser!.uid;
+
+    return StreamBuilder<DatabaseEvent>(
+      stream: _solicitudService.streamHistorialProfesional(miUid),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(child: Text("Error: ${snapshot.error}"));
+        }
+
+        if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
+            return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.history_toggle_off, size: 60, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                const Text(
+                  "Aún no has completado servicios.",
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              ],
+            ),
+          );
+        }
+
+        Map data = snapshot.data!.snapshot.value as Map;
+        List<Map> listaServicios = [];
+        
+        data.forEach((key, value) {
+          final servicio = Map<String, dynamic>.from(value);
+          servicio['key'] = key; 
+          listaServicios.add(servicio);
+        });
+
+        listaServicios.sort((a, b) {
+          int timestampA = a['timestamp'] ?? 0;
+          int timestampB = b['timestamp'] ?? 0;
+          return timestampB.compareTo(timestampA); 
+        });
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(12),
+          itemCount: listaServicios.length,
+          itemBuilder: (context, index) {
+            final item = listaServicios[index];
+            final String estado = item['estado'] ?? 'desconocido';
+            final String tipo = item['tipo'] ?? 'Servicio';
+            final int timestamp = item['timestamp'] ?? 0;
+            final double? calificacion = item['calificacion'] != null 
+                ? (item['calificacion'] as num).toDouble() 
+                : null;
+            
+            final DateTime fecha = DateTime.fromMillisecondsSinceEpoch(timestamp);
+            final String fechaTexto = "${fecha.day}/${fecha.month} ${fecha.hour}:${fecha.minute.toString().padLeft(2, '0')}";
+
+            return Card(
+              elevation: 2,
+              margin: const EdgeInsets.only(bottom: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                leading: CircleAvatar(
+                  backgroundColor: _getColorEstado(estado),
+                  child: Icon(_getIconTipo(tipo), color: Colors.white),
+                ),
+                title: Text(
+                  tipo,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 4),
+                    Text(fechaTexto, style: TextStyle(color: Colors.grey[600])),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: _getColorEstado(estado).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: _getColorEstado(estado).withOpacity(0.5))
+                          ),
+                          child: Text(
+                            estado.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 10, 
+                              fontWeight: FontWeight.bold,
+                              color: _getColorEstado(estado)
+                            ),
+                          ),
+                        ),
+                        if (calificacion != null) ...[
+                          const SizedBox(width: 10),
+                          const Icon(Icons.star, size: 14, color: Colors.amber),
+                          Text(
+                            " $calificacion",
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          )
+                        ]
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
+  }
+
+  // Helpers para colores e iconos
+  Color _getColorEstado(String estado) {
+    switch (estado) {
+      case 'finalizado': return Colors.green;
+      case 'cerrado': return Colors.green[700]!; // Cerrado significa calificado
+      case 'cancelado': return Colors.red;
+      case 'aceptado': return Colors.blue;
+      default: return Colors.orange;
+    }
+  }
+
+  IconData _getIconTipo(String tipo) {
+    if (tipo == 'Auto') return Icons.directions_car;
+    return Icons.home; 
   }
 }
 
