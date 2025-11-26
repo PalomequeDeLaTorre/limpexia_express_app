@@ -188,63 +188,19 @@ class _PantallaLoginState extends State<PantallaLogin> {
                         color: const Color(0xFF064E7D),
                       ),
  
-                      const SizedBox(height: 20),
-                      Row(
-                      children: const [
-                       Expanded(
-                       child: Divider(
-                       color: Colors.grey,
-                       thickness: 1,
-                       endIndent: 10,
-                      ),
-                     ),
-                    Text(
-                        'O',
+                    
+                    const SizedBox(height: 20),
+
+                      const Text(
+                        '© 2025 Limpexia. Todos los derechos reservados.',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w500,
                         ),
-                       ),
-                      Expanded(
-                        child: Divider(
-                        color: Colors.grey,
-                        thickness: 1,
-                        indent: 10,
-                       ),
-                       ),
-                      ],
-                     ),
-                    const SizedBox(height: 12),
-                      SizedBox(
-                         width: double.infinity,
-                         height: 50,
-                         child: ElevatedButton.icon(
-                         onPressed: () {
-      
-                         },
-                        icon: Image.asset(
-                        'assets/google_logo.jpg',
-                        height: 24,
-                        width: 24,
-                        ),
-                        label: const Text(
-                        'Continuar con Google',
-                        style: TextStyle(
-                        color: Colors.black87,
-                        fontSize: 16,
-                         ),
-                        ),
-                       style: ElevatedButton.styleFrom(
-                       backgroundColor: Colors.white,
-                       side: const BorderSide(color: Colors.grey),
-                       shape: const RoundedRectangleBorder(
-                       borderRadius: BorderRadius.all(Radius.circular(8)),
-                       ),
-                       elevation: 1,
-                       ),
-                       ),
                       ),
+
                     ],
                   ),
                 ),
