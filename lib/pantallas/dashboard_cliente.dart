@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:firebase_database/firebase_database.dart';
 import 'package:limpexia_express_app/servicios/servicio_autos.dart';
 import 'package:limpexia_express_app/servicios/servicio_casas.dart';
@@ -8,6 +8,12 @@ import '../utilidades/colores.dart';
 import 'login.dart';
 import 'seguimiento_cliente.dart';
 import 'pantalla_calificacion.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+
 
 class DashboardCliente extends StatefulWidget {
   const DashboardCliente({super.key});
@@ -42,6 +48,9 @@ class _DashboardClienteState extends State<DashboardCliente> {
   void initState() {
     _serviciosSubscription?.cancel();
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<AuthProvider>(context, listen: false).recargarUsuario();
+    });
     _cargarDatosUsuario();
     _cargarServiciosUsuario();
     _cargarNotificaciones();
@@ -66,53 +75,113 @@ class _DashboardClienteState extends State<DashboardCliente> {
     }
   }
 
-  void _cargarServiciosUsuario() {
-    
+  void _cargarServiciosUsuario() async {
+    if (mounted) setState(() => cargandoServicios = true);
+
     final user = _auth.currentUser;
     if (user == null) return;
 
-    // Cancelar cualquier escucha anterior para no duplicar
-    _serviciosSubscription?.cancel();
+    final prefs = await SharedPreferences.getInstance();
+    final String keyLocal = 'servicios_cache_${user.uid}'; 
+    final List<ConnectivityResult> connectivityResult = await (Connectivity().checkConnectivity());
+    bool hayInternet = !connectivityResult.contains(ConnectivityResult.none);
 
-    // Iniciar la escucha en tiempo real
-    _serviciosSubscription = _db
-        .ref('solicitudes')
-        .orderByChild('clienteId')
-        .equalTo(user.uid)
-        .onValue
-        .listen((event) {
-      
-      // Esta parte se ejecuta cada que algo cambia en la base de datos
-      final List<Map<String, dynamic>> listaTemporal = [];
-      
-      if (event.snapshot.exists && event.snapshot.value != null) {
-        final data = Map<dynamic, dynamic>.from(event.snapshot.value as Map);
+    if (hayInternet) {
+      _serviciosSubscription?.cancel();
+
+      _serviciosSubscription = _db
+          .ref('solicitudes')
+          .orderByChild('clienteId')
+          .equalTo(user.uid)
+          .onValue
+          .listen((event) {
         
-        data.forEach((key, value) {
-          final servicio = Map<String, dynamic>.from(value);
-          servicio['id'] = key;
-          listaTemporal.add(servicio);
-        });
+        final List<Map<String, dynamic>> listaTemporal = [];
 
-        // Ordenar
-        listaTemporal.sort((a, b) {
-          var timeA = a['timestamp'] ?? 0;
-          var timeB = b['timestamp'] ?? 0;
-          return timeB.compareTo(timeA);
-        });
-      }
+        if (event.snapshot.exists && event.snapshot.value != null) {
+          final data = Map<dynamic, dynamic>.from(event.snapshot.value as Map);
+          
+          data.forEach((key, value) {
+            final servicio = Map<String, dynamic>.from(value);
+            servicio['id'] = key;
+            listaTemporal.add(servicio);
+          });
 
-      // Actualizamos la pantalla
-      if (mounted) {
-        setState(() {
-          serviciosSolicitados = listaTemporal;
-          cargandoServicios = false;
-        });
+          // Ordenar: Más recientes primero
+          listaTemporal.sort((a, b) {
+            var timeA = a['timestamp'] ?? 0;
+            var timeB = b['timestamp'] ?? 0;
+            return timeB.compareTo(timeA);
+          });
+
+          // --- AQUÍ ESTÁ EL TRUCO PWA ---
+          // Guardamos esta lista fresca en el dispositivo para el futuro
+          try {
+            String jsonData = jsonEncode(listaTemporal);
+            prefs.setString(keyLocal, jsonData);
+          } catch (e) {
+            print("Error guardando caché: $e");
+          }
+          // -----------------------------
+        }
+
+        if (mounted) {
+          setState(() {
+            serviciosSolicitados = listaTemporal;
+            cargandoServicios = false;
+          });
+        }
+      }, onError: (error) {
+        print("Error escuchando servicios: $error");
+        if (mounted) setState(() => cargandoServicios = false);
+      });
+
+    } else {
+      // Leer lo que guardamos antes
+      print("Modo Offline: Intentando cargar caché local...");
+      
+      String? jsonGuardado = prefs.getString(keyLocal);
+
+      if (jsonGuardado != null) {
+        try {
+          // Decodificar el JSON guardado
+          List<dynamic> listaDecodificada = jsonDecode(jsonGuardado);
+          
+          // Convertir a la estructura de tu app
+          List<Map<String, dynamic>> listaOffline = listaDecodificada
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
+
+          if (mounted) {
+            setState(() {
+              serviciosSolicitados = listaOffline;
+              cargandoServicios = false;
+            });
+
+            // Avisar al usuario que está viendo datos guardados
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Sin internet. Mostrando historial guardado."),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+        } catch (e) {
+          print("Error leyendo caché: $e");
+          if (mounted) setState(() => cargandoServicios = false);
+        }
+      } else {
+        // No hay internet y no hay nada guardado (primera vez que entra)
+        if (mounted) setState(() => cargandoServicios = false);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("No hay conexión a internet.")),
+          );
+        }
       }
-    }, onError: (error) {
-      print("Error escuchando servicios: $error");
-      if (mounted) setState(() => cargandoServicios = false);
-    });
+    }
   }
 
   Future<void> _cargarNotificaciones() async {
@@ -689,7 +758,18 @@ class _DashboardClienteState extends State<DashboardCliente> {
   }
 
   // Función para mostrar el menú de tipos de servicio
-  void _mostrarMenuTiposServicio(BuildContext context) {
+  void _mostrarMenuTiposServicio(BuildContext context) async {
+
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Necesitas internet para solicitar un nuevo servicio."),
+          backgroundColor: Colors.red,
+        )
+      );
+      return;
+    }
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
