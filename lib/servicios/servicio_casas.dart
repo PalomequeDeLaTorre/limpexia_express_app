@@ -26,9 +26,9 @@ class _ServicioCasasState extends State<ServicioCasas> {
   bool _buscando = false;
   int _paginaActual = 0;
   final List<String> _servicios = [
-    'Limpieza profunda',
-    'Lavar ropa',
-    'Planchar',
+    'Limpieza profunda - \$600',
+    'Lavar ropa - \$400',
+    'Planchar - \$300',
   ];
 
   final List<String> _catalogoImgs = [
@@ -59,7 +59,6 @@ class _ServicioCasasState extends State<ServicioCasas> {
       }
     });
   }
-
 
   void _buscarProfesional() async {
     if (_seleccionados.isEmpty) {
@@ -200,21 +199,14 @@ class _ServicioCasasState extends State<ServicioCasas> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Mapa
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
                   child: SizedBox(
                     height: 240,
-                    child: GoogleMap(
-                      onMapCreated: (controller) => _mapController = controller,
-                      initialCameraPosition: CameraPosition(
-                        target: _ubicacionCliente,
-                        zoom: 14,
+                    child: Image.asset(
+                    'assets/prof-limpieza.png',
+                      fit: BoxFit.cover,
                       ),
-                      markers: _marcadores,
-                      zoomControlsEnabled: false,
-                      myLocationEnabled: true,
-                    ),
                   ),
                 ),
 
