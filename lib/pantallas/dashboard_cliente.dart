@@ -75,6 +75,44 @@ class _DashboardClienteState extends State<DashboardCliente> {
     }
   }
 
+  void _buscarServicio() {
+  String texto = _busquedaController.text.trim().toLowerCase();
+
+  if (texto.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Escribe algo para buscar.")),
+    );
+    return;
+  }
+
+  // --- PALABRAS CLAVE DE CASAS ---
+  final casas = ["casa", "casas", "hogar", "limpieza de casa"];
+  // --- PALABRAS CLAVE DE AUTOS ---
+  final autos = ["auto", "autos", "carro", "carros", "coche", "coches"];
+
+  if (casas.contains(texto)) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ServicioCasas()),
+    );
+
+  } else if (autos.contains(texto)) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ServicioAutos()),
+    );
+
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("No se encontró un servicio con ese nombre."),
+        backgroundColor: Colors.red,
+      ),
+      );
+     }
+    }
+
+
   void _cargarServiciosUsuario() async {
     if (mounted) setState(() => cargandoServicios = true);
 
@@ -428,23 +466,33 @@ class _DashboardClienteState extends State<DashboardCliente> {
                 ),
               ],
             ),
+
             const SizedBox(height: 20),
+
             TextField(
-              controller: _busquedaController,
-              decoration: InputDecoration(
-                hintText: 'Buscar servicios de limpieza...',
-                prefixIcon: const Icon(Icons.search,
-                    color: Color.fromARGB(255, 6, 78, 125)),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
-                ),
-              ),
+            controller: _busquedaController,
+            onSubmitted: (_) => _buscarServicio(), 
+            decoration: InputDecoration(
+            hintText: 'Buscar servicios de limpieza...',
+    
+            prefixIcon: GestureDetector(
+            onTap: _buscarServicio,                 // ← LA LUPA AHORA ES BOTÓN
+            child: const Icon(
+            Icons.search,
+            color: Color.fromARGB(255, 6, 78, 125),
             ),
+            ),
+
+             filled: true,
+             fillColor: Colors.white,
+             contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+             border: OutlineInputBorder(
+             borderRadius: BorderRadius.circular(14),
+             borderSide: BorderSide.none,
+            ),
+           ),
+          ),
+
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,

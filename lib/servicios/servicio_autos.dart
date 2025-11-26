@@ -21,15 +21,15 @@ class _ServicioAutosState extends State<ServicioAutos> {
   final Set<Marker> _marcadores = {};
   final Set<String> _seleccionados = {};
   bool _buscando = false;
-  int _paginaActual = 0; 
+  int _paginaActual = 0;
 
   String? _solicitudIdActual;
   StreamSubscription? _solicitudSubscription;
 
   final List<String> _servicios = [
-    'Pulido',
-    'Encerado',
-    'Limpieza interior',
+    'Pulido - \$250',
+    'Encerado - \$300',
+    'Limpieza interior - \$500',
   ];
 
   final List<String> _catalogoImgs = [
@@ -72,7 +72,6 @@ class _ServicioAutosState extends State<ServicioAutos> {
     setState(() => _buscando = true);
 
     try {
-      // Crea la solicitud y guarda el ID
       String nuevoId = await _solicitudService.crearSolicitud(
         tipoServicio: 'Auto',
         opcionesSeleccionadas: _seleccionados.toList(),
@@ -83,7 +82,6 @@ class _ServicioAutosState extends State<ServicioAutos> {
       });
 
       _escucharCambiosSolicitud(nuevoId);
-
     } catch (e) {
       setState(() => _buscando = false);
       if (mounted) {
@@ -97,20 +95,16 @@ class _ServicioAutosState extends State<ServicioAutos> {
   void _escucharCambiosSolicitud(String solicitudId) {
     _solicitudSubscription?.cancel();
 
-    _solicitudSubscription = _solicitudService.streamSolicitud(solicitudId).listen((
-      event,
-    ) {
-      // Verifica si existen datos
+    _solicitudSubscription =
+        _solicitudService.streamSolicitud(solicitudId).listen((event) {
       if (event.snapshot.value == null) return;
 
       final data = event.snapshot.value as Map;
       final estado = data['estado'];
 
       if (estado == 'aceptado') {
-        // deja de escuchar para no duplicar eventos
         _solicitudSubscription?.cancel();
 
-        // Quita la pantalla negra overlay
         if (mounted) {
           setState(() => _buscando = false);
 
@@ -118,7 +112,7 @@ class _ServicioAutosState extends State<ServicioAutos> {
             context,
             MaterialPageRoute(
               builder: (context) => SeguimientoCliente(
-                solicitudId: solicitudId, 
+                solicitudId: solicitudId,
               ),
             ),
           );
@@ -127,7 +121,6 @@ class _ServicioAutosState extends State<ServicioAutos> {
     });
   }
 
-  // Función para cancelar la espera manualmnete
   void _cancelarBusqueda() async {
     if (_solicitudIdActual != null) {
       await _solicitudService.cancelarSolicitud(_solicitudIdActual!);
@@ -141,9 +134,8 @@ class _ServicioAutosState extends State<ServicioAutos> {
     });
 
     if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Búsqueda cancelada')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Búsqueda cancelada')));
     }
   }
 
@@ -203,23 +195,18 @@ class _ServicioAutosState extends State<ServicioAutos> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-  
+         
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
                   child: SizedBox(
                     height: 240,
-                    child: GoogleMap(
-                      onMapCreated: (controller) => _mapController = controller,
-                      initialCameraPosition: CameraPosition(
-                        target: _ubicacionCliente,
-                        zoom: 14,
-                      ),
-                      markers: _marcadores,
-                      zoomControlsEnabled: false,
-                      myLocationEnabled: true,
+                    child: Image.asset(
+                       'assets/prof-carros.png',
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
+       
                 const SizedBox(height: 16),
 
                 const Text(
@@ -243,14 +230,19 @@ class _ServicioAutosState extends State<ServicioAutos> {
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
                         leading: Icon(
-                          activo ? Icons.check_circle : Icons.local_car_wash_outlined,
-                          color: activo ? AppColores.secundario : AppColores.texto,
+                          activo
+                              ? Icons.check_circle
+                              : Icons.local_car_wash_outlined,
+                          color:
+                              activo ? AppColores.secundario : AppColores.texto,
                         ),
                         title: Text(
                           s,
                           style: TextStyle(
-                            fontWeight: activo ? FontWeight.bold : FontWeight.normal,
-                            color: activo ? AppColores.secundario : AppColores.texto,
+                            fontWeight:
+                                activo ? FontWeight.bold : FontWeight.normal,
+                            color:
+                                activo ? AppColores.secundario : AppColores.texto,
                           ),
                         ),
                         trailing: Checkbox(
@@ -280,7 +272,8 @@ class _ServicioAutosState extends State<ServicioAutos> {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 6, 78, 125),
+                        backgroundColor:
+                            const Color.fromARGB(255, 6, 78, 125),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -330,8 +323,8 @@ class _ServicioAutosState extends State<ServicioAutos> {
                 Center(
                   child: Text(
                     '© 2025 Limpexia. Todos los derechos reservados.',
-                    style: TextStyle(
-                        color: Colors.grey.shade600, fontSize: 12),
+                    style:
+                        TextStyle(color: Colors.grey.shade600, fontSize: 12),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -374,7 +367,6 @@ class _ServicioAutosState extends State<ServicioAutos> {
 
                   const SizedBox(height: 50),
 
-                  // Botón para cancelar la espera
                   TextButton.icon(
                     onPressed: _cancelarBusqueda,
                     icon: const Icon(Icons.close, color: Colors.white),
