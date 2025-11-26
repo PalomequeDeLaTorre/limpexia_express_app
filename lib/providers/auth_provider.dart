@@ -148,4 +148,27 @@ class AuthProvider extends ChangeNotifier {
 
     return "Ocurrió un error inesperado. Intenta de nuevo.";
   }
+
+
+  // Método para recargar datos si ya hay sesión abierta
+  Future<void> recargarUsuario() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    try {
+      final userRef = _database.ref('usuarios/${user.uid}');
+      final snapshot = await userRef.get();
+
+      if (snapshot.exists) {
+        final data = Map<String, dynamic>.from(snapshot.value as Map);
+        userRole = data['rol'] as String?;
+        _nombreUsuario = data['nombre'] as String?;
+        _profesion = data['profesion'] as String?;
+        _fotoPerfilUrl = data['fotoPerfilUrl'] as String?;
+        notifyListeners();
+      }
+    } catch (e) {
+      print("Error recargando usuario: $e");
+    }
+  }
 }

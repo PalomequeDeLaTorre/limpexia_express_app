@@ -6,10 +6,9 @@ import '../utilidades/colores.dart';
 import 'login.dart';
 import '../servicios/usuario_service.dart';
 import 'pestana_solicitudes.dart';
-
-
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider; 
 import '../servicios/solicitud_service.dart';
+
 
 class DashboardProfesional extends StatefulWidget {
   const DashboardProfesional({super.key});
@@ -33,6 +32,9 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<AuthProvider>(context, listen: false).recargarUsuario();
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _configurarServicios();
     });
@@ -429,11 +431,9 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
                 const Icon(Icons.star_rounded, color: Colors.amber, size: 48),
                 const SizedBox(height: 8),
                 
-                // Estrellitas dinámicas
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(5, (i) {
-                    // Usamos .round() para decidir si pintar o no
                     return Icon(
                       i < _calificacion.round() 
                           ? Icons.star 
