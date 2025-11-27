@@ -40,28 +40,28 @@ exports.enviarNotificacionServicio = onValueCreated(
       return null;
     }
 
-    // 3. Crear payload
-    const payload = {
+    const message = {
       notification: {
         title: titulo,
         body: cuerpo,
-        sound: "default",
       },
       data: {
         click_action: "FLUTTER_NOTIFICATION_CLICK",
-        // En v2, los parámetros de la ruta están en event.params
-        solicitudId: event.params.solicitudId, 
+        solicitudId: event.params.solicitudId,
         ruta: "dashboard_profesional"
       },
+      topic: tema // <--- El tema se define aquí ahora
     };
 
-    // 4. Enviar
-    return admin.messaging().sendToTopic(tema, payload)
+    console.log(`Enviando mensaje al tema: ${tema}`);
+
+    // Usamos .send() en lugar de .sendToTopic()
+    return admin.messaging().send(message)
         .then((response) => {
-          console.log("Notificación enviada:", response);
+          console.log("✅ ÉXITO: Notificación enviada. Message ID:", response);
         })
         .catch((error) => {
-          console.log("Error:", error);
+          console.log("❌ ERROR CRÍTICO al enviar FCM:", error);
         });
   }
 );
