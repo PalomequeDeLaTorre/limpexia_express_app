@@ -171,4 +171,8 @@ class AuthProvider extends ChangeNotifier {
       print("Error recargando usuario: $e");
     }
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> b9ac6c1372d29ac468c4569198191fe108a9ef47

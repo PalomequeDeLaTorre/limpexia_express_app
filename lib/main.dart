@@ -19,12 +19,15 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+<<<<<<< HEAD
   try {
     final notificationService = NotificationService();
     await notificationService.initNotifications();
   } catch (e) {
     print("Error iniciando notificaciones: $e");
   }
+=======
+>>>>>>> b9ac6c1372d29ac468c4569198191fe108a9ef47
 
   runApp(AppState());
 }

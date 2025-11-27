@@ -97,6 +97,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.1"
+<<<<<<< HEAD
   cross_file:
     dependency: transitive
     description:
@@ -105,6 +106,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.3.5+1"
+=======
+>>>>>>> b9ac6c1372d29ac468c4569198191fe108a9ef47
   crypto:
     dependency: transitive
     description:
@@ -153,6 +156,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.1"
+<<<<<<< HEAD
   file_selector_linux:
     dependency: transitive
     description:
@@ -185,6 +189,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.9.3+5"
+=======
+>>>>>>> b9ac6c1372d29ac468c4569198191fe108a9ef47
   firebase_auth:
     dependency: "direct main"
     description:
@@ -281,6 +287,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.10.10"
+<<<<<<< HEAD
   firebase_storage:
     dependency: "direct main"
     description:
@@ -305,6 +312,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.10.17"
+=======
+>>>>>>> b9ac6c1372d29ac468c4569198191fe108a9ef47
   fixnum:
     dependency: transitive
     description:
