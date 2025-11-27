@@ -8,6 +8,7 @@ import '../servicios/usuario_service.dart';
 import 'pestana_solicitudes.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider; 
 import '../servicios/solicitud_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 
 class DashboardProfesional extends StatefulWidget {
@@ -39,6 +40,38 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
       _configurarServicios();
     });
     _escucharCalificacion();
+    _configurarNotificaciones();
+  }
+
+  void _configurarNotificaciones() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    // 1. Pedir permisos (necesario para iOS y Android 13+)
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print('Permiso concedido');
+      
+      // 2. Obtener la profesión del usuario actual
+      // Asumo que 'authProvider' ya tiene el dato cargado o lo obtienes de tu variable local
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final profesion = authProvider.profesion; 
+
+      // 3. Suscribirse al tema (Topic) correspondiente
+      if (profesion == "Limpieza de casas") {
+        await messaging.subscribeToTopic("profesionales_casa");
+        await messaging.unsubscribeFromTopic("profesionales_auto"); // Por si cambió de oficio
+        print("Suscrito a alertas de CASAS");
+      } else if (profesion == "Lavado de autos") {
+        await messaging.subscribeToTopic("profesionales_auto");
+        await messaging.unsubscribeFromTopic("profesionales_casa");
+        print("Suscrito a alertas de AUTOS");
+      }
+    }
   }
 
   void _escucharCalificacion() {
