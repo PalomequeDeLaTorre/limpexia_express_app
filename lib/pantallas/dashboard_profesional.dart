@@ -33,20 +33,53 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AuthProvider>(context, listen: false).recargarUsuario();
+    
+    // 1. Configuramos el listener de mensajes en primer plano (esto sí puede ir aquí)
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('Mensaje recibido en primer plano: ${message.notification?.title}');
+      if (message.notification != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${message.notification!.title}: ${message.notification!.body}',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 5),
+            
+          ),
+        );
+      }
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _configurarServicios();
-    });
+
     _escucharCalificacion();
-    _configurarNotificaciones();
+
+    // 2. Llamamos a la inicialización ORDENADA de datos
+    _inicializarDatos();
+  }
+
+  // --- FUNCIÓN NUEVA PARA ASEGURAR EL ORDEN ---
+  Future<void> _inicializarDatos() async {
+    // A. Obtenemos el provider
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    // B. ESPERAMOS (await) a que termine de descargar los datos de Firebase
+    await authProvider.recargarUsuario();
+
+    // C. Verificamos que la pantalla siga abierta
+    if (!mounted) return;
+
+    // D. Ahora sí, con los datos cargados, configuramos servicios y notificaciones
+    print("Datos de usuario cargados. Profesión actual: ${authProvider.profesion}");
+    
+    _configurarServicios();       // Ya tendrá la profesión correcta
+    _configurarNotificaciones();  // Ya tendrá la profesión correcta para el if
   }
 
   void _configurarNotificaciones() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-    // 1. Pedir permisos (necesario para iOS y Android 13+)
+    // 1. Pedir permisos
     NotificationSettings settings = await messaging.requestPermission(
       alert: true,
       badge: true,
@@ -54,22 +87,18 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('Permiso concedido');
-      
-      // 2. Obtener la profesión del usuario actual
-      // Asumo que 'authProvider' ya tiene el dato cargado o lo obtienes de tu variable local
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final profesion = authProvider.profesion; 
+      print('Permiso de notificaciones concedido');
 
-      // 3. Suscribirse al tema (Topic) correspondiente
-      if (profesion == "Limpieza de casas") {
+      // 2. ¡SUSCRIPCIÓN TOTAL!
+      // No preguntamos la profesión. Simplemente nos suscribimos a TODO.
+      
+      try {
         await messaging.subscribeToTopic("profesionales_casa");
-        await messaging.unsubscribeFromTopic("profesionales_auto"); // Por si cambió de oficio
-        print("Suscrito a alertas de CASAS");
-      } else if (profesion == "Lavado de autos") {
         await messaging.subscribeToTopic("profesionales_auto");
-        await messaging.unsubscribeFromTopic("profesionales_casa");
-        print("Suscrito a alertas de AUTOS");
+        
+        print("✅ MODO GLOBAL: Suscrito a alertas de CASAS y AUTOS");
+      } catch (e) {
+        print("Error al suscribirse a los temas: $e");
       }
     }
   }
