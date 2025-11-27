@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:firebase_database/firebase_database.dart';
+import 'package:limpexia_express_app/pantallas/editar_perfil_page.dart';
 import 'package:limpexia_express_app/servicios/servicio_autos.dart';
 import 'package:limpexia_express_app/servicios/servicio_casas.dart';
 import '../utilidades/colores.dart';
@@ -354,12 +355,8 @@ class _DashboardClienteState extends State<DashboardCliente> {
                 ),
               ),
               centerTitle: true,
+
               actions: [
-                IconButton(
-                  onPressed: _mostrarNotificaciones,
-                  icon:
-                      const Icon(Icons.notifications, color: Colors.white),
-                ),
                 PopupMenuButton<String>(
                   icon: const Icon(Icons.menu, color: Colors.white),
                   shape: RoundedRectangleBorder(
@@ -424,7 +421,7 @@ class _DashboardClienteState extends State<DashboardCliente> {
             label: 'Home'
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt), 
+            icon: Icon(Icons.notifications), 
             label: 'Mis servicios'
           ),
         ],
@@ -993,9 +990,44 @@ class PantallaPerfil extends StatelessWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
-                
+
+                const SizedBox(height: 20),
+
+                 SizedBox(
+                  width: 160,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => EditarPerfilPage(
+                            nombreActual: nombre,
+                            correo: correo,
+                            fotoActual: fotoUrl,
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 6, 78, 125),
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.edit, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text('Editar perfil', style: TextStyle(color: Colors.white)),
+                      ],
+                    ),
+                  ),
+                ),
+            
                 const SizedBox(height: 24),
+
                 Center(
                 child: SizedBox(
                   width: 160,

@@ -176,10 +176,9 @@ class _ServicioAutosState extends State<ServicioAutos> {
         backgroundColor: Colors.white,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.cleaning_services),
+            icon: Icon(Icons.directions_car),
             label: 'Servicio',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
         ],
       ),
     );

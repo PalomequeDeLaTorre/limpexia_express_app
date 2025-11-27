@@ -11,6 +11,7 @@ import '../servicios/solicitud_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 
+
 class DashboardProfesional extends StatefulWidget {
   const DashboardProfesional({super.key});
 
@@ -132,10 +133,10 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
     setState(() {
       if (profesion == "Limpieza de casas") {
         servicios = ["Limpieza profunda", "Lavar ropa", "Planchar"];
-        tarifas = [200, 150, 180];
+        tarifas = [300, 400, 600];
       } else if (profesion == "Lavado de autos") {
         servicios = ["Pulido", "Encerado", "Interior"];
-        tarifas = [350, 300, 250];
+        tarifas = [250, 300, 500];
       } else {
         servicios = [];
         tarifas = [];
@@ -204,10 +205,6 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
               ),
               centerTitle: true,
               actions: [
-                IconButton(
-                  onPressed: _mostrarNotificaciones,
-                  icon: const Icon(Icons.notifications, color: Colors.white),
-                ),
                 PopupMenuButton<String>(
                   icon: const Icon(Icons.menu, color: Colors.white),
                   shape: RoundedRectangleBorder(
@@ -215,10 +212,6 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
                   ),
                   itemBuilder: (context) => const [
                     PopupMenuItem(value: 'perfil', child: Text('👤 Mi perfil')),
-                    PopupMenuItem(
-                      value: 'pagos',
-                      child: Text('💳 Pagos y facturas'),
-                    ),
                     PopupMenuDivider(),
                     PopupMenuItem(
                       value: 'cerrar',
@@ -287,10 +280,10 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.local_laundry_service),
-            label: 'Limpiezas',
+            icon: Icon(Icons.notifications),
+            label: 'Solicitudes',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Historial'),
+          BottomNavigationBarItem(icon: Icon(Icons.payments_outlined), label: 'Pagos / Servicios'),
         ],
       ),
     );
