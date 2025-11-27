@@ -355,12 +355,8 @@ class _DashboardClienteState extends State<DashboardCliente> {
                 ),
               ),
               centerTitle: true,
+
               actions: [
-                IconButton(
-                  onPressed: _mostrarNotificaciones,
-                  icon:
-                      const Icon(Icons.notifications, color: Colors.white),
-                ),
                 PopupMenuButton<String>(
                   icon: const Icon(Icons.menu, color: Colors.white),
                   shape: RoundedRectangleBorder(
@@ -425,7 +421,7 @@ class _DashboardClienteState extends State<DashboardCliente> {
             label: 'Home'
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt), 
+            icon: Icon(Icons.notifications), 
             label: 'Mis servicios'
           ),
         ],
@@ -994,41 +990,6 @@ class PantallaPerfil extends StatelessWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
-                
-                const SizedBox(height: 24),
-
-
-                Center(
-                child: SizedBox(
-                  width: 160,
-                  child: ElevatedButton(
-                  onPressed: () async {
-                   await FirebaseAuth.instance.signOut();
-                    if (context.mounted) {
-                   Navigator.of(context).pushReplacement(
-                   MaterialPageRoute(builder: (_) => const PantallaLogin()),
-                   );
-                  }
-                  },
-                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 255, 0, 0),
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-                  shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                   ),
-                  ),
-                  child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.logout, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text('Cerrar sesión', style: TextStyle(color: Colors.white)),
-                  ],
-                ),
-                ),
-                ),
-               ),
 
                 const SizedBox(height: 20),
 
@@ -1065,6 +1026,38 @@ class PantallaPerfil extends StatelessWidget {
                   ),
                 ),
             
+                const SizedBox(height: 24),
+
+                Center(
+                child: SizedBox(
+                  width: 160,
+                  child: ElevatedButton(
+                  onPressed: () async {
+                   await FirebaseAuth.instance.signOut();
+                    if (context.mounted) {
+                   Navigator.of(context).pushReplacement(
+                   MaterialPageRoute(builder: (_) => const PantallaLogin()),
+                   );
+                  }
+                  },
+                 style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 255, 0, 0),
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                  shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                   ),
+                  ),
+                  child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.logout, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text('Cerrar sesión', style: TextStyle(color: Colors.white)),
+                  ],
+                ),
+                ),
+                ),
+               ),
 
               ],
             ),

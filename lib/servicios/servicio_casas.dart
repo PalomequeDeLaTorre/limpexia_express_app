@@ -181,10 +181,9 @@ class _ServicioCasasState extends State<ServicioCasas> {
         backgroundColor: Colors.white,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.cleaning_services),
+            icon: Icon(Icons.home_rounded),
             label: 'Servicio',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
         ],
       ),
     );
