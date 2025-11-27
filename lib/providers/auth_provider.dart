@@ -152,23 +152,19 @@ class AuthProvider extends ChangeNotifier {
 
   // Método para recargar datos si ya hay sesión abierta
   Future<void> recargarUsuario() async {
-    final user = _auth.currentUser;
-    if (user == null) return;
+  final uid = _auth.currentUser?.uid;
+  if (uid == null) return;
 
-    try {
-      final userRef = _database.ref('usuarios/${user.uid}');
-      final snapshot = await userRef.get();
+  final snapshot = await _database.ref('usuarios/$uid').get();
 
-      if (snapshot.exists) {
-        final data = Map<String, dynamic>.from(snapshot.value as Map);
-        userRole = data['rol'] as String?;
-        _nombreUsuario = data['nombre'] as String?;
-        _profesion = data['profesion'] as String?;
-        _fotoPerfilUrl = data['fotoPerfilUrl'] as String?;
-        notifyListeners();
-      }
-    } catch (e) {
-      print("Error recargando usuario: $e");
-    }
+  if (snapshot.exists) {
+    final data = Map<String, dynamic>.from(snapshot.value as Map);
+
+    _nombreUsuario = data['nombre'];
+    _profesion = data['profesion'];
+    _fotoPerfilUrl = data['fotoPerfilUrl'];
+
+    notifyListeners();     // 🚀 AHORA sí actualiza en vivo
   }
+ }
 }

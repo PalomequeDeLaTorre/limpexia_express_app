@@ -204,6 +204,8 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
                         child: Stack(
                           alignment: Alignment.bottomRight,
                           children: [
+
+
                             AnimatedScale(
                               scale: nuevaFoto != null ? 1.05 : 1.0,
                               duration: const Duration(milliseconds: 300),
@@ -219,6 +221,8 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
                                             as ImageProvider,
                               ),
                             ),
+
+                            
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: const BoxDecoration(

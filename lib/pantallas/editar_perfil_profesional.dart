@@ -80,9 +80,12 @@ class _EditarPerfilProfesionalState extends State<EditarPerfilProfesional> {
             children: [
               CircleAvatar(
                 radius: 45,
+
                 backgroundImage: foto != null
                     ? FileImage(File(foto))
                     : NetworkImage(widget.fotoActual) as ImageProvider,
+
+
               ),
               const SizedBox(height: 20),
               Text("Nombre: $nombre"),
@@ -97,7 +100,10 @@ class _EditarPerfilProfesionalState extends State<EditarPerfilProfesional> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 6, 78, 125)),
-              child: const Text("Confirmar"),
+              child: const Text(
+                 "Confirmar",
+                  style: TextStyle(color: Colors.white), 
+                  ),
               onPressed: () => Navigator.pop(context, true),
             ),
           ],
@@ -152,7 +158,11 @@ class _EditarPerfilProfesionalState extends State<EditarPerfilProfesional> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F9),
       appBar: AppBar(
-        title: const Text("Editar perfil profesional"),
+        title: const Text(
+          'Editar Perfil',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: const Color.fromARGB(255, 6, 78, 125),
         centerTitle: true,
         elevation: 3,
@@ -180,21 +190,26 @@ class _EditarPerfilProfesionalState extends State<EditarPerfilProfesional> {
                         child: Stack(
                           alignment: Alignment.bottomRight,
                           children: [
+
                             AnimatedScale(
-                              scale: _imagen != null ? 1.05 : 1.0,
-                              duration: const Duration(milliseconds: 300),
-                              child: CircleAvatar(
-                                radius: 70,
-                                backgroundColor: Colors.grey.shade100,
-                                backgroundImage: _imagen != null
-                                    ? FileImage(_imagen!)
-                                    : (widget.fotoActual.isNotEmpty
-                                        ? NetworkImage(widget.fotoActual)
-                                        : const AssetImage(
-                                            'assets/icono_usuario.jpg'))
-                                            as ImageProvider,
-                              ),
-                            ),
+  scale: _imagen != null ? 1.05 : 1.0,
+  duration: const Duration(milliseconds: 300),
+  child: Builder(
+    builder: (context) {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      return CircleAvatar(
+        radius: 70,
+        backgroundColor: Colors.grey.shade100,
+        backgroundImage: _imagen != null
+            ? FileImage(_imagen!)
+            : (auth.fotoPerfilUrl != null && auth.fotoPerfilUrl!.isNotEmpty
+                ? NetworkImage(auth.fotoPerfilUrl!)
+                : const AssetImage('assets/icono_usuario.jpg')) as ImageProvider,
+      );
+    },
+  ),
+),
+
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: const BoxDecoration(
@@ -231,19 +246,37 @@ class _EditarPerfilProfesionalState extends State<EditarPerfilProfesional> {
 
                     const SizedBox(height: 20),
 
-                    // Campo Profesión
-                    TextField(
-                      controller: _profesionController,
-                      decoration: InputDecoration(
-                        labelText: "Profesión",
-                        prefixIcon: const Icon(Icons.work),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                    // Dropdown de Profesión
+                    DropdownButtonFormField<String>(
+                    value: _profesionController.text.isNotEmpty
+                    ? _profesionController.text
+                    : null,
+                   items: const [
+                   DropdownMenuItem(
+                   value: "Lavado de autos",
+                   child: Text("Lavado de autos"),
+                   ),
+                   DropdownMenuItem(
+                   value: "Lavado de casas",
+                   child: Text("Lavado de casas"),
                     ),
+                   ],
+                   onChanged: (valor) {
+                   setState(() {
+                   _profesionController.text = valor!;
+                   });
+                    },
+                    decoration: InputDecoration(
+                    labelText: "Profesión",
+                    prefixIcon: const Icon(Icons.work),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                   ),
+                  ),
+                  ),
+
 
                     const SizedBox(height: 35),
 

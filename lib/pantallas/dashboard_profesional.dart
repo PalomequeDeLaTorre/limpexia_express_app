@@ -1,5 +1,6 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:limpexia_express_app/pantallas/editar_perfil_profesional.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../utilidades/colores.dart';
@@ -234,12 +235,10 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => PerfilProfesionalPage(
-                              nombreSimulado: nombreUsuario,
-                              fotoUrl: fotoUsuario,
-                            ),
+                          builder: (_) => const PerfilProfesionalPage(),
                           ),
                         );
+
                       }
                     } else if (value == 'pagos') {
                       if (context.mounted) {
@@ -767,22 +766,16 @@ class OlaAppBarClipper extends CustomClipper<Path> {
 }
 
 class PerfilProfesionalPage extends StatelessWidget {
-  final String nombreSimulado;
-  final String fotoUrl;
-
-  const PerfilProfesionalPage({
-    super.key,
-    required this.nombreSimulado,
-    required this.fotoUrl,
-  });
-
-  String _construirCorreoSimulado(String nombre) {
-    return "${nombre.replaceAll(' ', '.').toLowerCase()}@ejemplo.com";
-  }
+  const PerfilProfesionalPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final simulatedEmail = _construirCorreoSimulado(nombreSimulado);
+    final auth = Provider.of<AuthProvider>(context);
+
+    final nombre = auth.nombreUsuario ?? "Usuario";
+    final profesion = auth.profesion ?? "Sin profesión";
+    final correo = FirebaseAuth.instance.currentUser?.email ?? "Sin correo";
+    final foto = auth.fotoPerfilUrl ?? "";
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -790,8 +783,7 @@ class PerfilProfesionalPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading:
-            const BackButton(color: Color.fromARGB(255, 255, 255, 255)),
+        leading: const BackButton(color: Colors.white),
         title: const Text(
           'Mi perfil',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -817,7 +809,7 @@ class PerfilProfesionalPage extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Avatar con sombra
+                  // FOTO
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -833,29 +825,17 @@ class PerfilProfesionalPage extends StatelessWidget {
                       child: Container(
                         width: 140,
                         height: 140,
-                        color: Colors.grey[200],
-                        child: fotoUrl.isNotEmpty
-                            ? Image.network(
-                                fotoUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, e, s) {
-                                  return Image.asset(
-                                    'assets/icono_usuario.jpg',
-                                    fit: BoxFit.cover,
-                                  );
-                                },
-                              )
-                            : Image.asset(
-                                'assets/icono_usuario.jpg',
-                                fit: BoxFit.cover,
-                              ),
+                        child: foto.isNotEmpty
+                            ? Image.network(foto, fit: BoxFit.cover)
+                            : Image.asset('assets/icono_usuario.jpg',
+                                fit: BoxFit.cover),
                       ),
                     ),
                   ),
 
                   const SizedBox(height: 22),
 
-                  // Card con información del profesional
+                  // DATOS REALES
                   Card(
                     elevation: 6,
                     shape: RoundedRectangleBorder(
@@ -866,7 +846,7 @@ class PerfilProfesionalPage extends StatelessWidget {
                       child: Column(
                         children: [
                           Text(
-                            nombreSimulado,
+                            nombre,
                             style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -876,10 +856,19 @@ class PerfilProfesionalPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            simulatedEmail,
+                            correo,
                             style: const TextStyle(
                               fontSize: 16,
                               color: Colors.grey,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            profesion,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.black87,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -890,16 +879,46 @@ class PerfilProfesionalPage extends StatelessWidget {
 
                   const SizedBox(height: 28),
 
-                  // Botón de cerrar sesión
+                  // BOTÓN EDITAR PERFIL
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EditarPerfilProfesional(
+                              nombreActual: nombre,
+                              profesionActual: profesion,
+                              fotoActual: foto,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.edit, color: Colors.white),
+                      label: const Text(
+                        'Editar perfil',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF064E7D),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // CERRAR SESIÓN
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: () async {
-                        final authProvider = Provider.of<AuthProvider>(
-                          context,
-                          listen: false,
-                        );
-                        await authProvider.cerrarSesion();
+                        await auth.cerrarSesion();
+
                         if (context.mounted) {
                           Navigator.pushAndRemoveUntil(
                             context,
@@ -920,7 +939,6 @@ class PerfilProfesionalPage extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        elevation: 4,
                       ),
                     ),
                   ),
@@ -935,17 +953,6 @@ class PerfilProfesionalPage extends StatelessWidget {
     );
   }
 }
-
-  String _construirCorreoSimulado(String nombre) {
-    try {
-      final cleaned = nombre.toLowerCase().replaceAll(RegExp(r'\s+'), '.');
-      final safe = cleaned.replaceAll(RegExp(r'[^a-z0-9\._\-]'), '');
-      if (safe.isEmpty) return 'usuario@ejemplo.com';
-      return '$safe@ejemplo.com';
-    } catch (e) {
-      return 'usuario@ejemplo.com';
-    }
-  }
 
 
 class PagosFacturasPage extends StatelessWidget {
