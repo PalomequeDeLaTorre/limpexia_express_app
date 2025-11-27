@@ -6,7 +6,6 @@ import 'providers/auth_provider.dart';
 import 'pantallas/login.dart';
 import 'pantallas/dashboard_cliente.dart';
 import 'pantallas/dashboard_profesional.dart';
-import 'servicios/notification_service.dart';
 import 'utilidades/colores.dart';
 import 'firebase_options.dart';
 import 'servicios/auth_gate.dart';
@@ -19,12 +18,6 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  try {
-    final notificationService = NotificationService();
-    await notificationService.initNotifications();
-  } catch (e) {
-    print("Error iniciando notificaciones: $e");
-  }
 
   runApp(AppState());
 }
