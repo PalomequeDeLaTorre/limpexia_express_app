@@ -747,110 +747,165 @@ class PerfilProfesionalPage extends StatelessWidget {
     required this.fotoUrl,
   });
 
+  String _construirCorreoSimulado(String nombre) {
+    return "${nombre.replaceAll(' ', '.').toLowerCase()}@ejemplo.com";
+  }
+
   @override
   Widget build(BuildContext context) {
     final simulatedEmail = _construirCorreoSimulado(nombreSimulado);
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 6, 78, 125),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: const BackButton(color: Color.fromARGB(255, 255, 255, 255)),
+        leading:
+            const BackButton(color: Color.fromARGB(255, 255, 255, 255)),
         title: const Text(
           'Mi perfil',
-          style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 28.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ClipOval(
-                child: Container(
-                  width: 140,
-                  height: 140,
-                  color: Colors.grey[200],
-                  child: fotoUrl.isNotEmpty
-                      ? Image.network(
-                          fotoUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, e, s) {
-                            return Image.asset(
-                              'assets/icono_usuario.jpg',
-                              fit: BoxFit.cover,
-                            );
-                          },
-                        )
-                      : Image.asset(
-                          'assets/icono_usuario.jpg',
-                          fit: BoxFit.cover,
-                        ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Text(
-                nombreSimulado,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                simulatedEmail,
-                style: const TextStyle(fontSize: 14, color: Colors.black54),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 22),
-              ElevatedButton(
-                onPressed: () async {
-                  final authProvider = Provider.of<AuthProvider>(
-                    context,
-                    listen: false,
-                  );
-                  await authProvider.cerrarSesion();
-                  if (context.mounted) {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => const PantallaLogin()),
-                      (route) => false,
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 255, 0, 0),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 36,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.logout, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text(
-                      'Cerrar sesión',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF064E7D),
+              Color(0xFF0A6AAE),
             ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 28.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Avatar con sombra
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.25),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        )
+                      ],
+                    ),
+                    child: ClipOval(
+                      child: Container(
+                        width: 140,
+                        height: 140,
+                        color: Colors.grey[200],
+                        child: fotoUrl.isNotEmpty
+                            ? Image.network(
+                                fotoUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, e, s) {
+                                  return Image.asset(
+                                    'assets/icono_usuario.jpg',
+                                    fit: BoxFit.cover,
+                                  );
+                                },
+                              )
+                            : Image.asset(
+                                'assets/icono_usuario.jpg',
+                                fit: BoxFit.cover,
+                              ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  // Card con información del profesional
+                  Card(
+                    elevation: 6,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 26, horizontal: 20),
+                      child: Column(
+                        children: [
+                          Text(
+                            nombreSimulado,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF064E7D),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            simulatedEmail,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  // Botón de cerrar sesión
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final authProvider = Provider.of<AuthProvider>(
+                          context,
+                          listen: false,
+                        );
+                        await authProvider.cerrarSesion();
+                        if (context.mounted) {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const PantallaLogin()),
+                            (route) => false,
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.logout, color: Colors.white),
+                      label: const Text(
+                        'Cerrar sesión',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red[600],
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 4,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
   }
+}
 
   String _construirCorreoSimulado(String nombre) {
     try {
@@ -862,7 +917,7 @@ class PerfilProfesionalPage extends StatelessWidget {
       return 'usuario@ejemplo.com';
     }
   }
-}
+
 
 class PagosFacturasPage extends StatelessWidget {
   const PagosFacturasPage({super.key});

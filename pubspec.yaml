@@ -21,6 +21,8 @@ dependencies:
   # 📌 Agregar estos paquetes aquí:
   firebase_storage: ^12.1.2
   image_picker: ^1.1.2
+  animations: ^2.0.8
+
 
   # State Management
   provider: ^6.1.5+1
