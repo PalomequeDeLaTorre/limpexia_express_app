@@ -181,15 +181,14 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
         elevation: 3,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(22),
         child: Column(
           children: [
             Card(
-              elevation: 5,
-              shadowColor: const Color.fromARGB(66, 255, 255, 255),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
               ),
+              elevation: 5,
               child: Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 22, vertical: 28),
