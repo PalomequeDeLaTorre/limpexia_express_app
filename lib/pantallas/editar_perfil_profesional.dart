@@ -74,7 +74,7 @@ class _EditarPerfilProfesionalState extends State<EditarPerfilProfesional> {
         return AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          title: const Text("Confirmar cambios"),
+          title: const Text("Confirmar Cambios"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -297,7 +297,7 @@ class _EditarPerfilProfesionalState extends State<EditarPerfilProfesional> {
                             ? const CircularProgressIndicator(
                                 color: Colors.white)
                             : const Text(
-                                "Guardar cambios",
+                                "Guardar Cambios",
                                 style: TextStyle(
                                     fontSize: 17, color: Colors.white),
                               ),

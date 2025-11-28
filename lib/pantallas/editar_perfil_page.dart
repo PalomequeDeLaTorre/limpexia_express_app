@@ -82,7 +82,7 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Text("Confirmar cambios"),
+          title: const Text("Confirmar Cambios"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -293,7 +293,7 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
                             ? const CircularProgressIndicator(
                                 color: Colors.white)
                             : const Text(
-                                "Guardar cambios",
+                                "Guardar Cambios",
                                 style: TextStyle(
                                     fontSize: 17, color: Colors.white),
                               ),

@@ -363,10 +363,10 @@ class _DashboardClienteState extends State<DashboardCliente> {
                       borderRadius: BorderRadius.circular(12)),
                   itemBuilder: (context) => const [
                     PopupMenuItem(
-                        value: 'perfil',  child: Text('👤 Ver perfil')),
+                        value: 'perfil',  child: Text('👤 Ver Perfil')),
                     PopupMenuDivider(),
                     PopupMenuItem(
-                        value: 'cerrar', child: Text('🔴 Cerrar sesión')),
+                        value: 'cerrar', child: Text('🔴 Cerrar Sesión')),
                   ],
                   onSelected: (value) async {
                     if (value == 'cerrar') {
@@ -422,7 +422,7 @@ class _DashboardClienteState extends State<DashboardCliente> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications), 
-            label: 'Mis servicios'
+            label: 'Mis Servicios'
           ),
         ],
       ),
@@ -533,7 +533,7 @@ class _DashboardClienteState extends State<DashboardCliente> {
               ),
             ),
             const SizedBox(height: 28),
-            const Text('Servicios próximos',
+            const Text('Servicios Próximos',
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -562,7 +562,7 @@ class _DashboardClienteState extends State<DashboardCliente> {
     final botonSolicitar = ElevatedButton.icon(
       onPressed: () => _mostrarMenuTiposServicio(context),
       icon: const Icon(Icons.add),
-      label: const Text('Solicitar nuevo servicio'),
+      label: const Text('Solicitar Nuevo Servicio'),
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color.fromARGB(255, 6, 78, 125),
         foregroundColor: Colors.white,
@@ -1049,7 +1049,7 @@ class PantallaPerfil extends StatelessWidget {
                         },
                         icon: const Icon(Icons.edit, color: Colors.white),
                         label: const Text(
-                          'Editar perfil',
+                          'Editar Perfil',
                           style: TextStyle(color: Colors.white),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -1080,7 +1080,7 @@ class PantallaPerfil extends StatelessWidget {
                         },
                         icon: const Icon(Icons.logout, color: Colors.white),
                         label: const Text(
-                          'Cerrar sesión',
+                          'Cerrar Sesión',
                           style: TextStyle(color: Colors.white),
                         ),
                         style: ElevatedButton.styleFrom(

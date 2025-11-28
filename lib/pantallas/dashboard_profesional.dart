@@ -212,11 +212,11 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   itemBuilder: (context) => const [
-                    PopupMenuItem(value: 'perfil', child: Text('👤 Mi perfil')),
+                    PopupMenuItem(value: 'perfil', child: Text('👤 Mi Perfil')),
                     PopupMenuDivider(),
                     PopupMenuItem(
                       value: 'cerrar',
-                      child: Text('🔴 Cerrar sesión'),
+                      child: Text('🔴 Cerrar Sesión'),
                     ),
                   ],
                   onSelected: (value) async {
@@ -343,7 +343,7 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
       children: [
         const SizedBox(height: 12),
         const Text(
-          "Servicios ofrecidos",
+          "Servicios Ofrecidos",
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
@@ -411,7 +411,7 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
           ),
         const SizedBox(height: 28),
         const Text(
-          "Mis tarifas",
+          "Mis Tarifas",
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
@@ -525,7 +525,7 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Colors.black,
           ),
         ),
         const SizedBox(height: 12),
@@ -557,7 +557,7 @@ class _DashboardProfesionalState extends State<DashboardProfesional> {
                   color: Colors.white,
                 ),
                 label: Text(
-                  isDisponible ? "Disponible" : "No disponible",
+                  isDisponible ? "Disponible" : "No Disponible",
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -785,7 +785,7 @@ class PerfilProfesionalPage extends StatelessWidget {
         elevation: 0,
         leading: const BackButton(color: Colors.white),
         title: const Text(
-          'Mi perfil',
+          'Mi Perfil',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -897,7 +897,7 @@ class PerfilProfesionalPage extends StatelessWidget {
                       },
                       icon: const Icon(Icons.edit, color: Colors.white),
                       label: const Text(
-                        'Editar perfil',
+                        'Editar Perfil',
                         style: TextStyle(color: Colors.white),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -930,7 +930,7 @@ class PerfilProfesionalPage extends StatelessWidget {
                       },
                       icon: const Icon(Icons.logout, color: Colors.white),
                       label: const Text(
-                        'Cerrar sesión',
+                        'Cerrar Sesión',
                         style: TextStyle(color: Colors.white),
                       ),
                       style: ElevatedButton.styleFrom(
