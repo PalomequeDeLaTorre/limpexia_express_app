@@ -122,7 +122,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
                       ),
                       const SizedBox(height: 48),
                       InputPersonalizado(
-                        label: 'Gmail o Correo electrónico',
+                        label: 'Gmail o Correo Electrónico',
                         hint: 'ejemplo@correo.com',
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
