@@ -9,7 +9,6 @@ import 'pantallas/dashboard_profesional.dart';
 import 'utilidades/colores.dart';
 import 'firebase_options.dart';
 import 'servicios/auth_gate.dart';
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -17,7 +16,6 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
 
   runApp(AppState());
 }

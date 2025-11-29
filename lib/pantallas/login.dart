@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:limpexia_express_app/pantallas/pantalla_recuperar_password.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/boton.dart';
@@ -187,8 +188,33 @@ class _PantallaLoginState extends State<PantallaLogin> {
                         outline: true,
                         color: const Color(0xFF064E7D),
                       ),
- 
-                    
+
+                    const SizedBox(height: 16),
+
+                    TextButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const PantallaRecuperarPassword(),
+                        ),
+                      );
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text(
+                      '¿Olvidaste tu contraseña?',
+                      style: TextStyle(
+                        color: Color(0xFF064E7D),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                        decorationThickness: 1.5,
+                      ),
+                    ),
+                  ),
                     const SizedBox(height: 20),
 
                       const Text(
