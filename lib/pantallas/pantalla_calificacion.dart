@@ -76,13 +76,22 @@ class _PantallaCalificacionState extends State<PantallaCalificacion> {
             
             const SizedBox(height: 40),
             SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _estrellas > 0 ? _enviarCalificacion : null,
-                child: const Text("ENVIAR CALIFICACIÓN"),
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _estrellas > 0 ? _enviarCalificacion : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF064E7D),  
+                    foregroundColor: Colors.white, 
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  child: const Text("ENVIAR CALIFICACIÓN"),
+                ),
               ),
-            ),
+
             TextButton(
               onPressed: () {
                 Navigator.of(context).popUntil((route) => route.isFirst);

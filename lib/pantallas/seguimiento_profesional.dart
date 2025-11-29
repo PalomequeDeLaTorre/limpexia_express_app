@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:limpexia_express_app/pantallas/pantalla_chat.dart';
 import '../servicios/solicitud_service.dart';
+import 'dart:async';
 
 class SeguimientoProfesional extends StatefulWidget {
   final String solicitudId;
@@ -27,55 +28,93 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
     'Estoy afuera del domicilio'
   ];
 
-  String _estadoActual = 'por_salir'; // Estado inicial por defecto
+  String _estadoActual = 'por_salir';
+  StreamSubscription? _estadoSubscription;
 
   @override
   void initState() {
     super.initState();
-    // Inicia escuchando el estado real por si se cierra la app y se vuelve a abrir
     _estadoActual = widget.solicitudData['progreso'] ?? 'por_salir';
+    _escucharCambiosEstado();
   }
 
-  // Función para avanzar al siguiente paso
+  void _escucharCambiosEstado() {
+    _estadoSubscription = _solicitudService.streamSolicitud(widget.solicitudId).listen((event) {
+      if (event.snapshot.value != null) {
+        final data = event.snapshot.value as Map;
+        final nuevoEstado = data['progreso'] ?? 'por_salir';
+        
+        if (mounted && nuevoEstado != _estadoActual) {
+          setState(() {
+            _estadoActual = nuevoEstado;
+          });
+        }
+      }
+    });
+  }
+
   void _avanzarPaso() async {
     int indexActual = _pasosCodigo.indexOf(_estadoActual);
     
-    // Si todavía quedan pasos
     if (indexActual < _pasosCodigo.length - 1) {
       String siguientePaso = _pasosCodigo[indexActual + 1];
-      
       await _solicitudService.actualizarProgreso(widget.solicitudId, siguientePaso);
-      
-      setState(() {
-        _estadoActual = siguientePaso;
-      });
     } 
   }
 
   void _finalizarTrabajo() async {
-    // Para confirmar y finalizar el servicio con posibilidad de obtener un monto para funtura funcionalidad
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("¿Finalizar servicio?"),
-        content: const Text("Confirma que has terminado la limpieza y recibido el pago."),
+        backgroundColor: Color(0xFF064E7D),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          "¿Finalizar servicio?",
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Confirma que has terminado la limpieza y recibido el pago.",
+              style: TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "Precio total: \$${widget.solicitudData['precioTotal']?.toStringAsFixed(2) ?? '0.00'} MXN",
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.greenAccent,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+          TextButton(
+            onPressed: () => Navigator.pop(context), 
+            child: const Text("Cancelar", style: TextStyle(color: Colors.white70)),
+          ),
           ElevatedButton(
             onPressed: () async {
-              // Finalizamos en Firebase
-              await _solicitudService.finalizarServicio(widget.solicitudId, 0.0);
+              double precioTotal = (widget.solicitudData['precioTotal'] ?? 0).toDouble();
+              
+              await _solicitudService.finalizarServicio(widget.solicitudId, precioTotal);
               if (mounted) {
-                Navigator.pop(context); // Cierra diálogo
-                Navigator.pop(context); // Regresa al Dashboard
+                Navigator.pop(context); 
+                Navigator.pop(context); 
                 
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("¡Servicio completado con éxito!")),
                 );
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text("Finalizar Servicio", style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+            child: const Text("Finalizar Servicio", style: TextStyle(color: Color.fromARGB(255, 255, 255, 255))),
           )
         ],
       ),
@@ -83,13 +122,24 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
   }
 
   @override
+  void dispose() {
+    _estadoSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     int indexActual = _pasosCodigo.indexOf(_estadoActual);
 
     return Scaffold(
+      backgroundColor: Color(0xFF064E7D),
       appBar: AppBar(
-        title: const Text("Servicio en Curso"),
-        backgroundColor: const Color(0xFF064E7D),
+        title: const Text(
+          "Servicio en Curso",
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Color(0xFF064E7D),
+        elevation: 0,
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.keyboard_arrow_down),
@@ -100,30 +150,60 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
       ),
       body: Column(
         children: [
-          // INFO DEL CLIENTE
+
+          // --------------------------
+          //   INFO DEL CLIENTE - UBER
+          // --------------------------
           Container(
             padding: const EdgeInsets.all(20),
-            color: Colors.white,
+            decoration: const BoxDecoration(
+              color: Color(0xFF064E7D),
+              border: Border(
+                bottom: BorderSide(color: Colors.white24),
+              ),
+            ),
             child: Row(
               children: [
-                const CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.grey,
-                  child: Icon(Icons.person, color: Colors.white, size: 30),
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: const CircleAvatar(
+                    radius: 32,
+                    backgroundColor: Colors.white,
+                    child: Icon(Icons.person, color: Colors.black, size: 35),
+                  ),
                 ),
+
                 const SizedBox(width: 15),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.solicitudData['clienteNombre'] ?? "Cliente",
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const Text("Limpieza solicitada", style: TextStyle(color: Colors.grey)),
-                  ],
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.solicitudData['clienteNombre'] ?? "Cliente",
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        "Limpieza solicitada",
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        "Precio: \$${widget.solicitudData['precioTotal']?.toStringAsFixed(2) ?? '0.00'} MXN",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.greenAccent,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const Spacer(),
-                // Botón de Chat
+
                 IconButton(
                   onPressed: () {
                     Navigator.push(
@@ -133,14 +213,17 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
                       ),
                     );
                   },
-                  icon: const Icon(Icons.chat_bubble, color: Color(0xFF064E7D), size: 30),
+                  icon: const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 30),
                 )
               ],
             ),
-          ),
-          const Divider(height: 1),
 
-          // LÍNEA DE TIEMPO 
+            
+          ),
+
+          // --------------------------
+          //      LÍNEA DE TIEMPO
+          // --------------------------
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(24),
@@ -155,35 +238,47 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
                     Column(
                       children: [
                         Container(
-                          width: 30,
-                          height: 30,
+                          width: 26,
+                          height: 26,
                           decoration: BoxDecoration(
-                            color: isCompleted ? Colors.green : Colors.grey[300],
+                            color: isCompleted ? Colors.green : Colors.white,
                             shape: BoxShape.circle,
-                            border: isCurrent 
-                              ? Border.all(color: const Color(0xFF064E7D), width: 3) 
-                              : null,
                           ),
-                          child: isCompleted 
-                            ? const Icon(Icons.check, size: 18, color: Colors.white) 
-                            : null,
+                          child: isCompleted
+                              ? const Icon(Icons.check, size: 14, color: Colors.black)
+                              : const Icon(Icons.circle, size: 10, color: Colors.black),
                         ),
+
                         if (index < _pasosTexto.length - 1)
                           Container(
                             width: 3,
-                            height: 50,
-                            color: index < indexActual ? Colors.green : Colors.grey[300],
+                            height: 55,
+                            color: isCompleted ? Colors.green : Colors.white24,
                           ),
                       ],
                     ),
-                    const SizedBox(width: 15),
+
+                    const SizedBox(width: 20),
+
                     Expanded(
-                      child: Text(
-                        _pasosTexto[index],
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                          color: isCompleted ? Colors.black : Colors.grey,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: isCurrent ? Colors.white.withOpacity(0.15) : Colors.white10,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isCurrent ? Colors.white : Colors.white30,
+                            width: isCurrent ? 2 : 1,
+                          ),
+                        ),
+                        child: Text(
+                          _pasosTexto[index],
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                            color: isCompleted ? Colors.white : Colors.white70,
+                          ),
                         ),
                       ),
                     ),
@@ -193,37 +288,41 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
             ),
           ),
 
-          // BOTÓN DE ACCIÓN PRINCIPAL
+          // --------------------------
+          //      BOTÓN PRINCIPAL
+          // --------------------------
           Container(
             padding: const EdgeInsets.all(20),
             width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -5))],
+            decoration: const BoxDecoration(
+              color: Color(0xFF064E7D),
+              border: Border(top: BorderSide(color: Colors.white24)),
             ),
             child: indexActual < _pasosCodigo.length - 1
                 ? ElevatedButton(
                     onPressed: _avanzarPaso,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF064E7D),
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     child: Text(
                       "Siguiente paso: ${_pasosTexto[indexActual + 1]}",
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   )
                 : ElevatedButton(
                     onPressed: _finalizarTrabajo,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
+                      foregroundColor: const Color.fromARGB(255, 255, 255, 255),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     child: const Text(
                       "FINALIZAR SERVICIO",
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
           ),

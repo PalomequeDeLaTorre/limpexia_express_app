@@ -144,6 +144,24 @@ class _PestanaSolicitudesState extends State<PestanaSolicitudes> {
                               ),
                             ),
                             const SizedBox(height: 8),
+                            
+                            // === CAMBIO 1: Mostrar precio total ===
+                            Row(
+                              children: [
+                                Icon(Icons.attach_money, size: 18, color: Colors.green),
+                                const SizedBox(width: 4),
+                                Text(
+                                  "Precio: \$${sol['precioTotal']?.toStringAsFixed(2) ?? '0.00'} MXN",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green[700],
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            
                             const Text("Servicios solicitados:"),
                             Wrap(
                               spacing: 8,

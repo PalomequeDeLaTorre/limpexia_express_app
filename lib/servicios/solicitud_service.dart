@@ -1,114 +1,143 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-
-// Servicio para manejar solicitudes
 class SolicitudService {
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  //Crea nueva solicitud
+  final DatabaseReference _db = FirebaseDatabase.instance.ref();
+  
+  // === MÉTODO MODIFICADO: Crear solicitud con precio ===
   Future<String> crearSolicitud({
     required String tipoServicio,
     required List<String> opcionesSeleccionadas,
+    required double precioTotal,
   }) async {
-    User? user = _auth.currentUser;
-    if (user == null) throw Exception("Usuario no autenticado");
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('Usuario no autenticado');
 
-    DatabaseReference nuevaSolicitudRef = _dbRef.child('solicitudes').push();
-
-    await nuevaSolicitudRef.set({
-      'id': nuevaSolicitudRef.key,
+    final ref = _db.child('solicitudes').push();
+    
+    final solicitudData = {
       'clienteId': user.uid,
-      'clienteNombre': user.displayName ?? "Cliente", 
+      'clienteNombre': user.displayName ?? 'Usuario',
       'tipo': tipoServicio,
       'opciones': opcionesSeleccionadas,
-      'estado': 'pendiente', 
+      'precioTotal': precioTotal,
+      'estado': 'pendiente',
       'timestamp': ServerValue.timestamp,
-      'profesionalId': "",
+      'profesionalId': null,
+      'profesionalNombre': null,
+    };
+
+    await ref.set(solicitudData);
+    return ref.key!;
+  }
+
+  // === MÉTODO NUEVO: Actualizar progreso del servicio ===
+  // En SolicitudService, modifica el método actualizarProgreso:
+Future<void> actualizarProgreso(String solicitudId, String nuevoEstado) async {
+  await _db.child('solicitudes/$solicitudId').update({
+    'estado': nuevoEstado, // Usar 'estado' en lugar de 'progreso' para consistencia
+    'progreso': nuevoEstado, // También mantener progreso por compatibilidad
+    'timestampActualizacion': ServerValue.timestamp,
+  });
+}
+
+  // === MÉTODO NUEVO: Calificar servicio ===
+  Future<void> calificarServicio(
+    String solicitudId, 
+    String profesionalId, 
+    double calificacion
+  ) async {
+    // 1. Actualizar la solicitud con la calificación
+    await _db.child('solicitudes/$solicitudId').update({
+      'calificacion': calificacion,
+      'estado': 'cerrado', // Cambiar estado a cerrado después de calificar
+      'timestampCalificacion': ServerValue.timestamp,
     });
 
-    return nuevaSolicitudRef.key!;
+    // 2. Actualizar la calificación promedio del profesional
+    await _actualizarCalificacionProfesional(profesionalId, calificacion);
   }
 
-  // Cancelar solicitud
-  Future<void> cancelarSolicitud(String solicitudId) async {
-    await _dbRef.child('solicitudes/$solicitudId').remove();
+  // === MÉTODO PRIVADO: Actualizar calificación del profesional ===
+  Future<void> _actualizarCalificacionProfesional(
+    String profesionalId, 
+    double nuevaCalificacion
+  ) async {
+    final userRef = _db.child('usuarios/$profesionalId');
+    
+    // Obtener datos actuales del profesional
+    final snapshot = await userRef.get();
+    if (snapshot.exists) {
+      final data = snapshot.value as Map;
+      final double calificacionActual = (data['calificacion_promedio'] ?? 5.0).toDouble();
+      final int cantidadResenas = data['cantidad_resenas'] ?? 0;
+
+      // Calcular nueva calificación promedio
+      final double nuevaCalificacionPromedio = 
+          (calificacionActual * cantidadResenas + nuevaCalificacion) / 
+          (cantidadResenas + 1);
+
+      // Actualizar en la base de datos
+      await userRef.update({
+        'calificacion_promedio': nuevaCalificacionPromedio,
+        'cantidad_resenas': cantidadResenas + 1,
+      });
+    }
   }
 
-  //Escuchar una solicitud específica
-  Stream<DatabaseEvent> streamSolicitud(String solicitudId) {
-    return _dbRef.child('solicitudes/$solicitudId').onValue;
+  // === MÉTODO NUEVO: Finalizar servicio ===
+  Future<void> finalizarServicio(String solicitudId, double precioFinal) async {
+    await _db.child('solicitudes/$solicitudId')
+      .update({
+        'estado': 'finalizado',
+        'precioFinal': precioFinal,
+        'timestampFinalizacion': ServerValue.timestamp,
+      });
   }
 
-  //Obtener flujo de todas las solicitudes pendientes
-  Query get querySolicitudesPendientes {
-    return _dbRef.child('solicitudes').orderByChild('estado').equalTo('pendiente');
+  // === MÉTODO NUEVO: Obtener historial del profesional ===
+  Stream<DatabaseEvent> streamHistorialProfesional(String profesionalId) {
+    return _db.child('solicitudes')
+      .orderByChild('profesionalId')
+      .equalTo(profesionalId)
+      .onValue;
   }
 
-  // Aceptar una solicitud
+  // === MÉTODOS EXISTENTES ===
+  Query get querySolicitudesPendientes => 
+      _db.child('solicitudes').orderByChild('estado').equalTo('pendiente');
+
+  Stream<DatabaseEvent> streamSolicitud(String solicitudId) =>
+      _db.child('solicitudes/$solicitudId').onValue;
+
   Future<void> aceptarSolicitud(String solicitudId, String nombreProfesional) async {
-    User? user = _auth.currentUser;
-    if (user == null) return;
-
-    await _dbRef.child('solicitudes/$solicitudId').update({
+    final user = FirebaseAuth.instance.currentUser;
+    await _db.child('solicitudes/$solicitudId').update({
       'estado': 'aceptado',
-      'profesionalId': user.uid,
+      'profesionalId': user?.uid,
       'profesionalNombre': nombreProfesional,
     });
   }
 
-  // Actualiza el progreso del servicio Los 4 pasos
-  Future<void> actualizarProgreso(String solicitudId, String nuevoEstado) async {
-    await _dbRef.child('solicitudes/$solicitudId').update({
-      'progreso': nuevoEstado,
+  Future<void> cancelarSolicitud(String solicitudId) async {
+    await _db.child('solicitudes/$solicitudId').update({
+      'estado': 'cancelado',
     });
   }
 
-  // Finaliza el servicio
-  Future<void> finalizarServicio(String solicitudId, double montoFinal) async {
-    await _dbRef.child('solicitudes/$solicitudId').update({
-      'estado': 'finalizado',
-      'progreso': 'completado',
-      'montoFinal': montoFinal, // Para el historial de pagos
-    });
+  // === MÉTODO NUEVO: Obtener datos de una solicitud ===
+  Future<Map<String, dynamic>?> obtenerSolicitud(String solicitudId) async {
+    final snapshot = await _db.child('solicitudes/$solicitudId').get();
+    if (snapshot.exists) {
+      final data = snapshot.value as Map;
+      return Map<String, dynamic>.from(data);
+    }
+    return null;
   }
 
-  Future<void> calificarServicio(String solicitudId, String profesionalId, double estrellas) async {
-    // Guardar la calificación en la Solicitud
-    await _dbRef.child('solicitudes').child(solicitudId).update({
-      'calificacion': estrellas,
-      'estado': 'cerrado', // Estado final
-    });
-
-    // Actualiza el promedio del profesional
-    final profesionalRef = _dbRef.child('usuarios').child(profesionalId);
-    
-    await profesionalRef.runTransaction((Object? post) {
-      if (post == null) {
-        return Transaction.success(post);
-      }
-      
-      Map<dynamic, dynamic> data = Map<dynamic, dynamic>.from(post as Map);
-
-      double promedioActual = (data['calificacion_promedio'] ?? 0.0).toDouble();
-      int totalVotos = (data['cantidad_resenas'] ?? 0).toInt();
-
-      double nuevoPromedio = ((promedioActual * totalVotos) + estrellas) / (totalVotos + 1);
-      
-      data['calificacion_promedio'] = nuevoPromedio;
-      data['cantidad_resenas'] = totalVotos + 1;
-
-      return Transaction.success(data);
-    });
-  }
-
-  // Obtener historial de servicios del cliente
-  Stream<DatabaseEvent> streamHistorialProfesional(String uidProfesional) {
-    return _dbRef
-        .child('solicitudes')
-        .orderByChild('profesionalId')
-        .equalTo(uidProfesional)
-        .onValue;
+  // === MÉTODO NUEVO: Verificar si servicio está finalizado ===
+  Future<bool> estaServicioFinalizado(String solicitudId) async {
+    final snapshot = await _db.child('solicitudes/$solicitudId/estado').get();
+    return snapshot.value == 'finalizado';
   }
 }

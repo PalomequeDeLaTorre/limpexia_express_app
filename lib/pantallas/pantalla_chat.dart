@@ -91,7 +91,7 @@ class _PantallaChatState extends State<PantallaChat> {
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
                           // Color Azul si es mio, Gris si es del otro
-                          color: esMio ? Colors.blue : Colors.grey[300], 
+                          color: esMio ? Color(0xFF064E7D) : Colors.grey[300], 
                           borderRadius: BorderRadius.only(
                             topLeft: const Radius.circular(12),
                             topRight: const Radius.circular(12),
@@ -127,7 +127,7 @@ class _PantallaChatState extends State<PantallaChat> {
                 ),
                 const SizedBox(width: 8),
                 CircleAvatar(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: Color(0xFF064E7D),
                   child: IconButton(
                     icon: const Icon(Icons.send, color: Colors.white),
                     onPressed: _enviar,

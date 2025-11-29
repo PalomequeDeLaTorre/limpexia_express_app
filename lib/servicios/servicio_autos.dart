@@ -60,6 +60,22 @@ class _ServicioAutosState extends State<ServicioAutos> {
     });
   }
 
+  // === CAMBIO 1: Función para calcular precio total ===
+  double _calcularPrecioTotal() {
+    double total = 0.0;
+    
+    for (String servicio in _seleccionados) {
+      // Extraer el precio del string del servicio
+      RegExp regex = RegExp(r'\$(\d+)');
+      Match? match = regex.firstMatch(servicio);
+      if (match != null) {
+        total += double.parse(match.group(1)!);
+      }
+    }
+    
+    return total;
+  }
+
   void _buscarProfesional() async {
     if (_seleccionados.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -71,9 +87,13 @@ class _ServicioAutosState extends State<ServicioAutos> {
     setState(() => _buscando = true);
 
     try {
+      // === CAMBIO 2: Calcular precio total antes de enviar ===
+      double precioTotal = _calcularPrecioTotal();
+      
       String nuevoId = await _solicitudService.crearSolicitud(
         tipoServicio: 'Auto',
         opcionesSeleccionadas: _seleccionados.toList(),
+        precioTotal: precioTotal, // === CAMBIO 3: Enviar precio total ===
       );
 
       setState(() {
@@ -253,7 +273,39 @@ class _ServicioAutosState extends State<ServicioAutos> {
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 12),
+                
+                // === CAMBIO 4: Mostrar precio total ===
+                if (_seleccionados.isNotEmpty) ...[
+                  Card(
+                    elevation: 2,
+                    color: Colors.green[50],
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Total a pagar:',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green[800],
+                            ),
+                          ),
+                          Text(
+                            '\$${_calcularPrecioTotal().toStringAsFixed(2)} MXN',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green[800],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
 
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),

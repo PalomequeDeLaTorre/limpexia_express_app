@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:limpexia_express_app/pantallas/pantalla_calificacion.dart';
 import 'package:limpexia_express_app/pantallas/pantalla_chat.dart';
@@ -16,7 +16,6 @@ class SeguimientoCliente extends StatefulWidget {
 class _SeguimientoClienteState extends State<SeguimientoCliente> {
   final SolicitudService _solicitudService = SolicitudService();
 
-  // Mapeo de los códigos de progreso a textos y orden para la UI
   final Map<String, int> _pasosOrden = {
     'por_salir': 1,
     'en_camino': 2,
@@ -28,32 +27,55 @@ class _SeguimientoClienteState extends State<SeguimientoCliente> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF064E7D),
+
+      // ⭐ ÍCONO DE CHAT ARRIBA CON FONDO BLANCO
       appBar: AppBar(
-        title: const Text("Tu Servicio"),
+        backgroundColor: const Color(0xFF064E7D),
+        elevation: 0,
         automaticallyImplyLeading: false,
+        title: const Text(
+          "Tu Servicio",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
+        actions: [
+           IconButton(
+            padding: const EdgeInsets.only(right: 12),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PantallaChat(solicitudId: widget.solicitudId),
+                ),
+              );
+            },
+            icon: const Icon(
+              Icons.chat_bubble_outline,
+              color: Colors.white,
+              size: 28,
+            ),
+          ),
+        ],
       ),
+
       body: StreamBuilder<DatabaseEvent>(
         stream: _solicitudService.streamSolicitud(widget.solicitudId),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
+            return Center(child: Text("Error: ${snapshot.error}", style: const TextStyle(color: Colors.white)));
           }
 
           if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator(color: Colors.white));
           }
 
-          // Obtener los datos en tiempo real
           final data = Map<String, dynamic>.from(snapshot.data!.snapshot.value as Map);
           String estado = data['estado'] ?? 'pendiente';
           String progresoActual = data['progreso'] ?? 'por_salir';
 
           if (estado == 'finalizado') {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              // Evita navegar múltiples veces si ya estamos yendo
               if (ModalRoute.of(context)?.isCurrent ?? false) {
-                
-                // Obtener el ID del profesional de la data
                 String profId = data['profesionalId'] ?? '';
 
                 Navigator.pushReplacement(
@@ -71,21 +93,24 @@ class _SeguimientoClienteState extends State<SeguimientoCliente> {
 
           return Column(
             children: [
-              // Encabezado con datos del profesional
               _buildHeaderProfesional(),
 
-              const Divider(),
-              
+              const SizedBox(height: 10),
+
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.all(20),
                   children: [
                     const Text(
                       "Estado del Servicio",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                     const SizedBox(height: 20),
-                    
+
                     _buildStepItem("El profesional ha aceptado", "por_salir", progresoActual, isFirst: true),
                     _buildStepItem("Tu profesional va en camino", "en_camino", progresoActual),
                     _buildStepItem("Está por llegar a tu ubicación", "por_llegar", progresoActual),
@@ -94,22 +119,6 @@ class _SeguimientoClienteState extends State<SeguimientoCliente> {
                   ],
                 ),
               ),
-
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => PantallaChat(solicitudId: widget.solicitudId),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.chat),
-                  label: const Text("Chat con el Profesional")
-                ),
-              )
             ],
           );
         },
@@ -117,71 +126,124 @@ class _SeguimientoClienteState extends State<SeguimientoCliente> {
     );
   }
 
-  Widget _buildStepItem(String titulo, String pasoCodigo, String progresoActual, {bool isFirst = false, bool isLast = false}) {
+  // ---------------------------------------
+  //          ESTILO PREMIUM
+  // ---------------------------------------
+  Widget _buildStepItem(
+    String titulo,
+    String pasoCodigo,
+    String progresoActual,
+    {bool isFirst = false, bool isLast = false}
+  ) {
     int ordenActual = _pasosOrden[progresoActual] ?? 0;
     int ordenEstePaso = _pasosOrden[pasoCodigo] ?? 99;
-    
+
     bool isActive = ordenActual >= ordenEstePaso;
     bool isCurrent = ordenActual == ordenEstePaso;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(
-          children: [
-            if (!isFirst)
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              if (!isFirst)
+                Container(
+                  height: 28,
+                  width: 3,
+                  color: isActive ? Colors.green : Colors.white.withOpacity(0.4),
+                ),
               Container(
-                width: 2,
-                height: 30,
-                color: isActive ? Colors.green : Colors.grey[300],
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: isCurrent
+                      ? Colors.green
+                      : (isActive ? Colors.green : Colors.white),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isActive ? Icons.check : Icons.circle,
+                  color: Colors.black,
+                  size: 14,
+                ),
               ),
-            Icon(
-              isActive ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: isActive ? Colors.green : Colors.grey,
-              size: 30,
-            ),
-            if (!isLast)
-              Container(
-                width: 2,
-                height: 30,
-                color: isActive && !isCurrent ? Colors.green : Colors.grey[300],
-              ),
-          ],
-        ),
-        const SizedBox(width: 15),
-        Expanded(
-          child: Container(
-            margin: const EdgeInsets.only(top: 5),
-            child: Text(
-              titulo,
-              style: TextStyle(
-                color: isActive ? Colors.black : Colors.grey,
-                fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                fontSize: 16,
-              ),
-            ),
+              if (!isLast)
+                Container(
+                  height: 28,
+                  width: 3,
+                  color: isActive ? Colors.green : Colors.white.withOpacity(0.4),
+                ),
+            ],
           ),
-        )
-      ],
+
+          const SizedBox(width: 18),
+
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isCurrent ? Colors.green : Colors.white.withOpacity(0.4),
+                  width: 1.3,
+                ),
+              ),
+              child: Text(
+                titulo,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: isActive ? Colors.white : Colors.white70,
+                  fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
+                ),
+              ),
+            ),
+          )
+        ],
+      ),
     );
   }
 
   Widget _buildHeaderProfesional() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      color: Colors.blue[50],
+      padding: const EdgeInsets.all(24),
+      decoration: const BoxDecoration(
+        color: Color(0xFF064E7D),
+      ),
       child: Row(
         children: [
-          const CircleAvatar(
-            backgroundColor: Colors.blue,
-            child: Icon(Icons.person, color: Colors.white),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+            child: const CircleAvatar(
+              radius: 32,
+              backgroundColor: Colors.white,
+              child: Icon(Icons.person, size: 40, color: Colors.black),
+            ),
           ),
-          const SizedBox(width: 15),
+          const SizedBox(width: 20),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
-              Text("Profesional Asignado", style: TextStyle(fontWeight: FontWeight.bold)),
-              Text("Llegará pronto", style: TextStyle(color: Colors.grey)),
+              Text(
+                "Profesional Asignado",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 6),
+              Text(
+                "Llegará pronto",
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                ),
+              ),
             ],
           )
         ],
