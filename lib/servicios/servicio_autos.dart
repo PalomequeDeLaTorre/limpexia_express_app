@@ -60,12 +60,12 @@ class _ServicioAutosState extends State<ServicioAutos> {
     });
   }
 
-  // === CAMBIO 1: Función para calcular precio total ===
+  // Función para calcular precio total;
   double _calcularPrecioTotal() {
     double total = 0.0;
     
     for (String servicio in _seleccionados) {
-      // Extraer el precio del string del servicio
+      // Extraer el precio del string del servicio;
       RegExp regex = RegExp(r'\$(\d+)');
       Match? match = regex.firstMatch(servicio);
       if (match != null) {
@@ -87,13 +87,13 @@ class _ServicioAutosState extends State<ServicioAutos> {
     setState(() => _buscando = true);
 
     try {
-      // === CAMBIO 2: Calcular precio total antes de enviar ===
+      // Calcular precio total antes de enviar;
       double precioTotal = _calcularPrecioTotal();
       
       String nuevoId = await _solicitudService.crearSolicitud(
         tipoServicio: 'Auto',
         opcionesSeleccionadas: _seleccionados.toList(),
-        precioTotal: precioTotal, // === CAMBIO 3: Enviar precio total ===
+        precioTotal: precioTotal,
       );
 
       setState(() {
@@ -274,7 +274,7 @@ class _ServicioAutosState extends State<ServicioAutos> {
                   }).toList(),
                 ),
                 
-                // === CAMBIO 4: Mostrar precio total ===
+                // Mostrar precio total;
                 if (_seleccionados.isNotEmpty) ...[
                   Card(
                     elevation: 2,

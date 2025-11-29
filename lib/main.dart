@@ -13,7 +13,7 @@ import 'servicios/auth_gate.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializa Firebase
+  // Inicializa Firebase;
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -44,7 +44,6 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Limpexia',
-      //initialRoute: 'login',
       home: const AuthGate(),
       routes: {
         'login': (_) => const PantallaLogin(),

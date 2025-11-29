@@ -120,9 +120,9 @@ void initState() {
       return;
     }
 
-    // --- PALABRAS CLAVE DE CASAS ---
+    // PALABRAS CLAVE DE CASAS;
     final casas = ["casa", "casas", "hogar", "limpieza de casa"];
-    // --- PALABRAS CLAVE DE AUTOS ---
+    // PALABRAS CLAVE DE AUTOS;
     final autos = ["auto", "autos", "carro", "carros", "coche", "coches"];
 
     if (casas.contains(texto)) {
@@ -180,7 +180,7 @@ void initState() {
               listaTemporal.add(servicio);
             });
 
-            // Ordenar: Más recientes primero
+            // Ordenar: Más recientes primero;
             listaTemporal.sort((a, b) {
               var timeA = a['timestamp'] ?? 0;
               var timeB = b['timestamp'] ?? 0;
@@ -208,17 +208,17 @@ void initState() {
         });
 
       } else {
-        // Leer lo que guardamos antes
+        // Leer lo que guardamos antes;
         print("Modo Offline: Intentando cargar caché local...");
         
         String? jsonGuardado = prefs.getString(keyLocal);
 
         if (jsonGuardado != null) {
           try {
-            // Decodificar el JSON guardado
+            // Decodificar el JSON guardado;
             List<dynamic> listaDecodificada = jsonDecode(jsonGuardado);
             
-            // Convertir a la estructura de tu app
+            // Convertir a la estructura de tu app;
             List<Map<String, dynamic>> listaOffline = listaDecodificada
                 .map((e) => Map<String, dynamic>.from(e))
                 .toList();
@@ -229,7 +229,7 @@ void initState() {
                 cargandoServicios = false;
               });
 
-              // Avisar al usuario que está viendo datos guardados
+              // Avisar al usuario que está viendo datos guardados;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text("Sin internet. Mostrando historial guardado."),
@@ -243,7 +243,7 @@ void initState() {
             if (mounted) setState(() => cargandoServicios = false);
           }
         } else {
-          // No hay internet y no hay nada guardado (primera vez que entra)
+          // No hay internet y no hay nada guardado (primera vez que entra);
           if (mounted) setState(() => cargandoServicios = false);
           
           if (mounted) {
@@ -608,14 +608,14 @@ void initState() {
         ),
       );
 
-      // ESTADO DE CARGA
+      // ESTADO DE CARGA;
       if (cargandoServicios) {
         return const Center(
           child: CircularProgressIndicator(color: Color.fromARGB(255, 6, 78, 125)),
         );
       }
 
-      // 2. ESTADO VACÍO
+      // ESTADO VACÍO;
       if (serviciosSolicitados.isEmpty) {
         return SafeArea(
           child: Center(
@@ -640,7 +640,7 @@ void initState() {
         );
       }
 
-      // ESTADO CON HISTORIAL
+      // ESTADO CON HISTORIAL;
       return SafeArea(
         child: Column(
           children: [
@@ -663,16 +663,16 @@ void initState() {
                   itemBuilder: (context, index) {
                     final servicio = serviciosSolicitados[index];
 
-                    //Extracción de datos
+                    //Extracción de datos;
                     final tipo = servicio['tipo'] ?? servicio['categoria'] ?? 'Servicio';
                     final rawDate = servicio['fecha'] ?? servicio['created_at'] ?? servicio['timestamp'];
                     final String idSolicitud = servicio['id'];
                     final String? idProfesional = servicio['profesionalId'];
                     
-                    // Estado base de la BD
+                    // Estado base de la BD;
                     String estadoBD = (servicio['estado'] ?? 'Pendiente').toString().toLowerCase();
                     
-                    // Verifica si ya tiene calificación
+                    // Verifica si ya tiene calificación;
                     bool yaCalifico = servicio['calificacion'] != null || estadoBD == 'cerrado';
 
                     String textoEstado;
@@ -700,7 +700,7 @@ void initState() {
                       requiereAccion = true; 
                     }
 
-                    // Formateo de fecha
+                    // Formateo de fecha;
                     String fechaTexto = '';
                     if (rawDate is int) {
                       final dt = DateTime.fromMillisecondsSinceEpoch(rawDate);
@@ -726,7 +726,7 @@ void initState() {
                             const SnackBar(content: Text("Servicio completado exitosamente."))
                           );
                         } else if (estadoBD != 'cancelado') {
-                          // Ir a seguimiento
+                          // Ir a seguimiento;
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -827,7 +827,7 @@ void initState() {
       );
     }
 
-    // helper para dar color según estado
+    // helper para dar color según estado;
       Color _getColorEstado(String estado) {
         switch (estado.toLowerCase()) {
           case 'finalizado': return Colors.green;
@@ -838,7 +838,7 @@ void initState() {
         }
     }
 
-    // Función para mostrar el menú de tipos de servicio
+    // Función para mostrar el menú de tipos de servicio;
     void _mostrarMenuTiposServicio(BuildContext context) async {
 
       var connectivityResult = await (Connectivity().checkConnectivity());
@@ -960,7 +960,6 @@ void initState() {
     bool shouldReclip(OlaAppBarClipper oldClipper) => false;
   }
 
-
   class PantallaPerfil extends StatelessWidget {
     final String nombre;
     final String fotoUrl;
@@ -980,8 +979,6 @@ void initState() {
       final fotoUrl = provider.fotoPerfilUrl ?? '';
       final correo = FirebaseAuth.instance.currentUser?.email ?? 'Sin correo';
       
-
-
       return Scaffold(
         extendBodyBehindAppBar: true,
         appBar: AppBar(
@@ -1015,7 +1012,6 @@ void initState() {
                   padding: const EdgeInsets.symmetric(horizontal: 28.0),
                   child: Column(
                     children: [
-                      // Avatar con sombra
                       Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
@@ -1038,7 +1034,7 @@ void initState() {
 
                       const SizedBox(height: 22),
 
-                      // Tarjeta de información
+                      // Tarjeta de información;
                       Card(
                         elevation: 6,
                         shape: RoundedRectangleBorder(
@@ -1074,13 +1070,11 @@ void initState() {
 
                       const SizedBox(height: 28),
 
-                      // Botón de editar perfil
+                      // Botón de editar perfil;
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () {
-
-                            
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -1110,7 +1104,7 @@ void initState() {
 
                       const SizedBox(height: 20),
 
-                      // Botón de cerrar sesión
+                      // Botón de cerrar sesión;
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(

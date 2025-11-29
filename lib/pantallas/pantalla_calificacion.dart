@@ -17,7 +17,7 @@ class PantallaCalificacion extends StatefulWidget {
 
 class _PantallaCalificacionState extends State<PantallaCalificacion> {
   final SolicitudService _service = SolicitudService();
-  double _estrellas = 0; // Valor seleccionado
+  double _estrellas = 0; 
 
   void _enviarCalificacion() async {
     if (_estrellas == 0) return;

@@ -39,7 +39,7 @@ class _EditarPerfilProfesionalState extends State<EditarPerfilProfesional> {
     _profesionController = TextEditingController(text: widget.profesionActual);
   }
 
-  // Método para solicitar permisos
+  // Método para solicitar permisos;
   Future<bool> _solicitarPermisos() async {
     if (await Permission.photos.isGranted) {
       return true;
@@ -340,10 +340,10 @@ class _EditarPerfilProfesionalState extends State<EditarPerfilProfesional> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error inesperado: ${e.toString()}"), backgroundColor: Colors.red),
-      );
+        );
+      }
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {

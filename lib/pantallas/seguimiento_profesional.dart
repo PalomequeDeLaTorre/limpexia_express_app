@@ -151,9 +151,6 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
       body: Column(
         children: [
 
-          // --------------------------
-          //   INFO DEL CLIENTE - UBER
-          // --------------------------
           Container(
             padding: const EdgeInsets.all(20),
             decoration: const BoxDecoration(
@@ -217,13 +214,8 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
                 )
               ],
             ),
-
-            
           ),
 
-          // --------------------------
-          //      LÍNEA DE TIEMPO
-          // --------------------------
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(24),
@@ -288,9 +280,6 @@ class _SeguimientoProfesionalState extends State<SeguimientoProfesional> {
             ),
           ),
 
-          // --------------------------
-          //      BOTÓN PRINCIPAL
-          // --------------------------
           Container(
             padding: const EdgeInsets.all(20),
             width: double.infinity,

@@ -19,7 +19,7 @@ class _PestanaSolicitudesState extends State<PestanaSolicitudes> {
 
   @override
   Widget build(BuildContext context) {
-    // verfiacar si el profesional está DISPONIBLE
+
     return StreamBuilder<DatabaseEvent>(
       stream: _usuarioService.streamUsuario,
       builder: (context, snapshotUser) {
@@ -32,7 +32,7 @@ class _PestanaSolicitudesState extends State<PestanaSolicitudes> {
           nombreProfesional = data['nombre'] ?? "Profesional";
         }
 
-        // SI NO ESTÁ DISPONIBLE
+        // SI NO ESTÁ DISPONIBLE;
         if (!disponible) {
           return Center(
             child: Column(
@@ -49,7 +49,7 @@ class _PestanaSolicitudesState extends State<PestanaSolicitudes> {
           );
         }
 
-        // SI ESTÁ DISPONIBLE escucha las solicitudes
+        // SI ESTÁ DISPONIBLE escucha las solicitudes;
         return StreamBuilder<DatabaseEvent>(
           stream: _solicitudService.querySolicitudesPendientes.onValue,
           builder: (context, snapshotSolicitudes) {
@@ -67,13 +67,13 @@ class _PestanaSolicitudesState extends State<PestanaSolicitudes> {
               );
             }
 
-            // Convertir el JSON de Firebase a una Lista
+            // Convierte los datos en una lista filtrada;
             Map<dynamic, dynamic> data =
                 snapshotSolicitudes.data!.snapshot.value as Map;
             List<Map<String, dynamic>> solicitudes = [];
 
             data.forEach((key, value) {
-              // Filtrar los que hayamos rechazado localmente
+              // Filtrar los que hayamos rechazado localmente;
               if (!_rechazados.contains(key)) {
                 final solicitud = Map<String, dynamic>.from(value);
                 solicitud['key'] = key;
@@ -85,7 +85,7 @@ class _PestanaSolicitudesState extends State<PestanaSolicitudes> {
               return const Center(child: Text("No hay solicitudes nuevas."));
             }
 
-            // LISTA DE TARJETAS
+            // LISTA DE TARJETAS;
             return ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: solicitudes.length,
@@ -145,7 +145,6 @@ class _PestanaSolicitudesState extends State<PestanaSolicitudes> {
                             ),
                             const SizedBox(height: 8),
                             
-                            // === CAMBIO 1: Mostrar precio total ===
                             Row(
                               children: [
                                 Icon(Icons.attach_money, size: 18, color: Colors.green),
@@ -179,7 +178,7 @@ class _PestanaSolicitudesState extends State<PestanaSolicitudes> {
                             ),
                             const SizedBox(height: 20),
 
-                            // BOTONES DE ACCIÓN
+                            // BOTONES DE ACCIÓN;
                             Row(
                               children: [
                                 Expanded(
@@ -208,7 +207,6 @@ class _PestanaSolicitudesState extends State<PestanaSolicitudes> {
                                         nombreProfesional,
                                       );
 
-                              
                                       navigator.push(
                                         MaterialPageRoute(
                                           builder: (_) =>

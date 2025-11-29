@@ -45,8 +45,6 @@ class AuthProvider extends ChangeNotifier {
         userRole = data['rol'] as String?;
         _nombreUsuario = data['nombre'] as String?;
         _profesion = data['profesion'] as String?;
-        
-        // 🔥 CORRECCIÓN: Lee fotoUrl (no fotoPerfilUrl)
         _fotoPerfilUrl = data['fotoUrl'] as String?;
       } else {
         throw Exception('Datos de usuario no encontrados en la base de datos.');
@@ -94,7 +92,7 @@ class AuthProvider extends ChangeNotifier {
         'telefono': telefono,
         'rol': rol,
         'profesion': profesion ?? '',
-        'fotoUrl': '', // 🔥 CORRECCIÓN: Usar fotoUrl
+        'fotoUrl': '', 
       };
 
       // Guardar en RTDB;
@@ -132,7 +130,7 @@ class AuthProvider extends ChangeNotifier {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
 
-    // 🔥 CORRECCIÓN: Guardar como fotoUrl
+    // Guardar como fotoUrl;
     await _database.ref('usuarios/$uid/fotoUrl').set(url);
     _fotoPerfilUrl = url;
     notifyListeners();
@@ -152,7 +150,7 @@ class AuthProvider extends ChangeNotifier {
     return "Ocurrió un error inesperado. Intenta de nuevo.";
   }
 
-  // Método para recargar datos si ya hay sesión abierta
+  // Método para recargar datos si ya hay sesión abierta;
   Future<void> recargarUsuario() async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;

@@ -29,7 +29,6 @@ class _SeguimientoClienteState extends State<SeguimientoCliente> {
     return Scaffold(
       backgroundColor: const Color(0xFF064E7D),
 
-      // ⭐ ÍCONO DE CHAT ARRIBA CON FONDO BLANCO
       appBar: AppBar(
         backgroundColor: const Color(0xFF064E7D),
         elevation: 0,
@@ -126,9 +125,6 @@ class _SeguimientoClienteState extends State<SeguimientoCliente> {
     );
   }
 
-  // ---------------------------------------
-  //          ESTILO PREMIUM
-  // ---------------------------------------
   Widget _buildStepItem(
     String titulo,
     String pasoCodigo,

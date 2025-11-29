@@ -10,8 +10,6 @@ class PwaService {
   }
 
   void _verificarInstalacion() {
-    // En web, verificaríamos con JavaScript;
-    // Para este ejemplo simplificado;
     _esInstalable = true;
     _esInstalada = false;
   }

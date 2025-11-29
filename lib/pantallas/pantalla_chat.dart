@@ -17,7 +17,6 @@ class _PantallaChatState extends State<PantallaChat> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   
-  // Obtener el ID del usuario actual 
   final String miUid = FirebaseAuth.instance.currentUser!.uid;
 
   void _enviar() {
@@ -40,7 +39,7 @@ class _PantallaChatState extends State<PantallaChat> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // Muestra el email actual para verificar identidad
+        // Muestra el email actual para verificar identidad;
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -62,12 +61,12 @@ class _PantallaChatState extends State<PantallaChat> {
                   return const Center(child: Text("Sin mensajes aún."));
                 }
 
-                // Convertir la data de Firebase  a una Lista
+                // Convierte la data de Firebase a una lista ordenada;
                 Map data = snapshot.data!.snapshot.value as Map;
                 List mensajes = [];
                 data.forEach((key, value) => mensajes.add(value));
                 
-                // Ordenar por timestamp
+                // Ordenar por timestamp;
                 mensajes.sort((a, b) => (a['timestamp'] ?? 0).compareTo(b['timestamp'] ?? 0));
 
                 WidgetsBinding.instance.addPostFrameCallback((_) => _hacerScrollAlFinal());
@@ -79,7 +78,7 @@ class _PantallaChatState extends State<PantallaChat> {
                   itemBuilder: (context, index) {
                     final msg = mensajes[index];
                     
-                    // oBTENER DATOS
+                    // OBTENER DATOS;
                     final String remitenteId = msg['remitenteId'].toString();
                     final String miUid = FirebaseAuth.instance.currentUser!.uid;
                     final bool esMio = remitenteId == miUid;
@@ -90,7 +89,6 @@ class _PantallaChatState extends State<PantallaChat> {
                         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
-                          // Color Azul si es mio, Gris si es del otro
                           color: esMio ? Color(0xFF064E7D) : Colors.grey[300], 
                           borderRadius: BorderRadius.only(
                             topLeft: const Radius.circular(12),
@@ -110,7 +108,7 @@ class _PantallaChatState extends State<PantallaChat> {
               },
             ),
           ),
-          // Input
+          // Input;
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(

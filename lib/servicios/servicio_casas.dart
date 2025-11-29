@@ -60,12 +60,12 @@ class _ServicioCasasState extends State<ServicioCasas> {
     });
   }
 
-  // === CAMBIO 1: Función para calcular precio total ===
+  // Función para calcular precio total;
   double _calcularPrecioTotal() {
     double total = 0.0;
     
     for (String servicio in _seleccionados) {
-      // Extraer el precio del string del servicio
+      // Extraer el precio del string del servicio;
       RegExp regex = RegExp(r'\$(\d+)');
       Match? match = regex.firstMatch(servicio);
       if (match != null) {
@@ -87,13 +87,13 @@ class _ServicioCasasState extends State<ServicioCasas> {
     setState(() => _buscando = true);
 
     try {
-      // === CAMBIO 2: Calcular precio total antes de enviar ===
+      // Calcular precio total antes de enviar;
       double precioTotal = _calcularPrecioTotal();
       
       String nuevoId = await _solicitudService.crearSolicitud(
         tipoServicio: 'Casa',
         opcionesSeleccionadas: _seleccionados.toList(),
-        precioTotal: precioTotal, // === CAMBIO 3: Enviar precio total ===
+        precioTotal: precioTotal, // Enviar precio total;
       );
 
       setState(() {
@@ -141,7 +141,7 @@ class _ServicioCasasState extends State<ServicioCasas> {
     });
   }
 
-  // Función para cancelar la espera manualmnete
+  // Función para cancelar la espera manualmnete;
   void _cancelarBusqueda() async {
     if (_solicitudIdActual != null) {
       await _solicitudService.cancelarSolicitud(_solicitudIdActual!);
@@ -280,7 +280,7 @@ class _ServicioCasasState extends State<ServicioCasas> {
                   }).toList(),
                 ),
 
-                // === CAMBIO 4: Mostrar precio total ===
+                // Mostrar precio total;
                 if (_seleccionados.isNotEmpty) ...[
                   Card(
                     elevation: 2,
@@ -426,7 +426,7 @@ class _ServicioCasasState extends State<ServicioCasas> {
 
                   const SizedBox(height: 50),
 
-                  // Botón para cancelar la espera
+                  // Botón para cancelar la espera;
                   TextButton.icon(
                     onPressed: _cancelarBusqueda,
                     icon: const Icon(Icons.close, color: Colors.white),

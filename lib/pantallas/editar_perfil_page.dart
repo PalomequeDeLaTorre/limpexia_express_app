@@ -340,10 +340,10 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
       password: actual,
     );
 
-    // Primero intentamos reautenticar
+    // Primero intentamos reautenticar;
     await user.reauthenticateWithCredential(credential);
     
-    // Si la reautenticación es exitosa, actualizamos la contraseña
+    // Si la reautenticación es exitosa, actualizamos la contraseña;
     await user.updatePassword(nueva);
 
     if (mounted) {
