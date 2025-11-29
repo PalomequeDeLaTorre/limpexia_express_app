@@ -35,7 +35,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
     void initState() {
       super.initState();
       
-      // 1. Configuramos el listener de mensajes en primer plano (esto sí puede ir aquí)
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         print('Mensaje recibido en primer plano: ${message.notification?.title}');
         if (message.notification != null) {
@@ -54,33 +53,23 @@ import 'package:firebase_messaging/firebase_messaging.dart';
       });
 
       _escucharCalificacion();
-
-      // 2. Llamamos a la inicialización ORDENADA de datos
       _inicializarDatos();
     }
 
-    // --- FUNCIÓN NUEVA PARA ASEGURAR EL ORDEN ---
     Future<void> _inicializarDatos() async {
-      // A. Obtenemos el provider
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-      // B. ESPERAMOS (await) a que termine de descargar los datos de Firebase
       await authProvider.recargarUsuario();
-
-      // C. Verificamos que la pantalla siga abierta
       if (!mounted) return;
 
-      // D. Ahora sí, con los datos cargados, configuramos servicios y notificaciones
       print("Datos de usuario cargados. Profesión actual: ${authProvider.profesion}");
       
-      _configurarServicios();       // Ya tendrá la profesión correcta
-      _configurarNotificaciones();  // Ya tendrá la profesión correcta para el if
+      _configurarServicios();       
+      _configurarNotificaciones(); 
     }
 
     void _configurarNotificaciones() async {
       FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-      // 1. Pedir permisos
       NotificationSettings settings = await messaging.requestPermission(
         alert: true,
         badge: true,
@@ -89,9 +78,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
         print('Permiso de notificaciones concedido');
-
-        // 2. ¡SUSCRIPCIÓN TOTAL!
-        // No preguntamos la profesión. Simplemente nos suscribimos a TODO.
         
         try {
           await messaging.subscribeToTopic("profesionales_casa");
@@ -168,10 +154,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
   void didChangeDependencies() {
     super.didChangeDependencies();
     
-    // Escuchar cambios cuando regresemos de editar el perfil
     final authProvider = Provider.of<AuthProvider>(context, listen: true);
     
-    // Si la profesión cambia, actualizar los servicios
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _configurarServicios();
     });
@@ -554,7 +538,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
                 return const Center(child: CircularProgressIndicator());
               }
 
-              // Extraer el valor real de la base de datos
               bool isDisponible = false;
 
               if (snapshot.data!.snapshot.value != null) {
@@ -562,11 +545,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
                 isDisponible = data['disponible'] ?? false;
               }
 
-              // Botón Reactivo
               return Center(
                 child: ElevatedButton.icon(
                   onPressed: () async {
-                    // Llama al servicio para escribir en Firebase
                     await _usuarioService.cambiarDisponibilidad(!isDisponible);
                   },
                   icon: Icon(
@@ -618,7 +599,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
       );
     }
 
-    // Variable para instanciar el servicio
     final SolicitudService _solicitudService = SolicitudService();
 
     Widget _paginaHistorial() {
@@ -743,7 +723,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
     Color _getColorEstado(String estado) {
       switch (estado) {
         case 'finalizado': return Colors.green;
-        case 'cerrado': return Colors.green[700]!; // Cerrado significa calificado
+        case 'cerrado': return Colors.green[700]!; 
         case 'cancelado': return Colors.red;
         case 'aceptado': return Colors.blue;
         default: return Colors.orange;

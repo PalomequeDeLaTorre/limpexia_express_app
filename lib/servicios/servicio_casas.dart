@@ -137,7 +137,7 @@ class _ServicioCasasState extends State<ServicioCasas> {
     if (mounted) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Búsqueda cancelada')));
+      ).showSnackBar(const SnackBar(content: Text('Búsqueda Cancelada')));
     }
   }
 
@@ -212,7 +212,7 @@ class _ServicioCasasState extends State<ServicioCasas> {
                 const SizedBox(height: 16),
 
                 const Text(
-                  'Servicios disponibles',
+                  'Servicios Disponibles',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -270,7 +270,7 @@ class _ServicioCasasState extends State<ServicioCasas> {
                       onPressed: _buscando ? null : _buscarProfesional,
                       icon: const Icon(Icons.search, color: Colors.white),
                       label: const Text(
-                        'Buscar profesional',
+                        'Buscar Profesional',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -290,7 +290,7 @@ class _ServicioCasasState extends State<ServicioCasas> {
                 const SizedBox(height: 18),
 
                 const Text(
-                  'Descubre más',
+                  'Descubre Más',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -380,7 +380,7 @@ class _ServicioCasasState extends State<ServicioCasas> {
                     onPressed: _cancelarBusqueda,
                     icon: const Icon(Icons.close, color: Colors.white),
                     label: const Text(
-                      "Cancelar búsqueda",
+                      "Cancelar Búsqueda",
                       style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
                     style: TextButton.styleFrom(

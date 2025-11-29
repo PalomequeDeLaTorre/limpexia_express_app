@@ -16,38 +16,38 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
 
-  class DashboardCliente extends StatefulWidget {
-    const DashboardCliente({super.key});
+class DashboardCliente extends StatefulWidget {
+  const DashboardCliente({super.key});
 
-    @override
-    State<DashboardCliente> createState() => _DashboardClienteState();
-  }
+@override
+  State<DashboardCliente> createState() => _DashboardClienteState();
+}
 
-  class _DashboardClienteState extends State<DashboardCliente> {
-    final _auth = FirebaseAuth.instance;
-    final _db = FirebaseDatabase.instance;
-    Map<dynamic, dynamic>? userData;
-    bool cargando = true;
-    StreamSubscription? _serviciosSubscription;
-    StreamSubscription? _userDataSubscription;
+class _DashboardClienteState extends State<DashboardCliente> {
+  final _auth = FirebaseAuth.instance;
+  final _db = FirebaseDatabase.instance;
+  Map<dynamic, dynamic>? userData;
+  bool cargando = true;
+  StreamSubscription? _serviciosSubscription;
+  StreamSubscription? _userDataSubscription;
 
-    List<Map<String, dynamic>> serviciosSolicitados = [];
-    bool cargandoServicios = true;
+List<Map<String, dynamic>> serviciosSolicitados = [];
+bool cargandoServicios = true;
 
-    List<String> notificaciones = [];
-    bool cargandoNotificaciones = true;
+List<String> notificaciones = [];
+bool cargandoNotificaciones = true;
 
-    int _paginaActual = 0;
-    final TextEditingController _busquedaController = TextEditingController();
+int _paginaActual = 0;
+final TextEditingController _busquedaController = TextEditingController();
 
-    final List<String> promociones = [
+final List<String> promociones = [
       'https://mx.habcdn.com/photos/business/medium/istock-9067775081-845441.jpg',
       'https://cdn.prod.website-files.com/629f82979557273ac33feb21/62a8fc884a38e17bb5ee0ddf_9-tipos-de-promociones-para-tu-punto-de-venta.jpg',
       'https://media.istockphoto.com/id/1433923860/es/foto/concepto-de-servicio-de-limpieza-durante-las-vacaciones-de-a%C3%B1o-nuevo.jpg?s=612x612&w=0&k=20&c=tjx-nNfECT42yAs_edeuKzLwZpx0s67m7fXU5rC1ik4=',
     ];
 
-    @override
-    void initState() {
+@override
+void initState() {
       _serviciosSubscription?.cancel();
       super.initState();
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -61,26 +61,25 @@ import '../providers/auth_provider.dart';
     }
 
     void _escucharCambiosUsuario() {
-  final user = _auth.currentUser;
-  if (user == null) return;
+      final user = _auth.currentUser;
+      if (user == null) return;
 
-  _userDataSubscription = _db.ref('usuarios/${user.uid}').onValue.listen((event) {
-    if (event.snapshot.exists && mounted) {
-      final newData = event.snapshot.value as Map<dynamic, dynamic>;
-      setState(() {
-        userData = newData; // <- ESTO SÍ actualiza userData
-      });
+    _userDataSubscription = _db.ref('usuarios/${user.uid}').onValue.listen((event) {
+        if (event.snapshot.exists && mounted) {
+          final newData = event.snapshot.value as Map<dynamic, dynamic>;
+            setState(() {
+            userData = newData; 
+            });
+
+            final provider = Provider.of<AuthProvider>(context, listen: false);
+            provider.actualizarFotoPerfil(newData['fotoUrl'] ?? '');
       
-      // También actualizar el Provider
-      final provider = Provider.of<AuthProvider>(context, listen: false);
-      provider.actualizarFotoPerfil(newData['fotoUrl'] ?? '');
-      
-      print("✅ Datos de usuario actualizados en tiempo real");
-    }
-  }, onError: (error) {
-    print("❌ Error escuchando cambios del usuario: $error");
-  });
-}
+              print("✅ Datos de usuario actualizados en tiempo real");
+            } 
+          }, onError: (error) {
+            print("❌ Error escuchando cambios del usuario: $error");
+          });
+        }
 
 
     Future<void> _cargarDatosUsuario() async {
@@ -106,10 +105,10 @@ import '../providers/auth_provider.dart';
 
      @override
      void dispose() {
-    _userDataSubscription?.cancel(); // <- NO OLVIDES cancelar la suscripción
-    _serviciosSubscription?.cancel();
-    super.dispose();
-  }
+        _userDataSubscription?.cancel(); 
+        _serviciosSubscription?.cancel();
+         super.dispose();
+        }
 
     void _buscarServicio() {
     String texto = _busquedaController.text.trim().toLowerCase();
@@ -188,15 +187,13 @@ import '../providers/auth_provider.dart';
               return timeB.compareTo(timeA);
             });
 
-            // --- AQUÍ ESTÁ EL TRUCO PWA ---
-            // Guardamos esta lista fresca en el dispositivo para el futuro
             try {
               String jsonData = jsonEncode(listaTemporal);
               prefs.setString(keyLocal, jsonData);
             } catch (e) {
               print("Error guardando caché: $e");
             }
-            // -----------------------------
+            
           }
 
           if (mounted) {
@@ -513,7 +510,7 @@ import '../providers/auth_provider.dart';
               hintText: 'Buscar servicios de limpieza...',
       
               prefixIcon: GestureDetector(
-              onTap: _buscarServicio,                 // ← LA LUPA AHORA ES BOTÓN
+              onTap: _buscarServicio,                 
               child: const Icon(
               Icons.search,
               color: Color.fromARGB(255, 6, 78, 125),
@@ -700,7 +697,7 @@ import '../providers/auth_provider.dart';
                     } else {
                       textoEstado = estadoBD.toUpperCase();
                       colorEstado = Colors.blue;
-                      requiereAccion = true; // Permite ir al seguimiento
+                      requiereAccion = true; 
                     }
 
                     // Formateo de fecha
@@ -714,7 +711,6 @@ import '../providers/auth_provider.dart';
 
                     return GestureDetector(
                       onTap: () {
-                        // Lógica de navegación al tocar la tarjeta entera
                         if (textoEstado == "POR CALIFICAR" && idProfesional != null) {
                           Navigator.push(
                             context,
